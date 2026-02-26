@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Royal Keno KZ</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold:    #FFD700;
+    --gold2:   #FFA500;
+    --dark:    #0a0a0f;
+    --dark2:   #12121a;
+    --dark3:   #1a1a26;
+    --card:    #16161f;
+    --border:  #2a2a3a;
+    --green:   #00ff88;
+    --red:     #ff4466;
+    --blue:    #4488ff;
+    --purple:  #aa44ff;
+    --text:    #e8e8f0;
+    --muted:   #666680;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(255,215,0,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(170,68,255,0.04) 0%, transparent 50%);
+  }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--dark2); }
+  ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+  /* ===== LAYOUT ===== */
+  .app { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: linear-gradient(135deg, var(--dark2), var(--dark3));
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+  .header-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+  }
+  .header-balance {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.3);
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+  .header-balance span { font-size: 13px; font-weight: 700; color: var(--gold); }
+  .star-icon { font-size: 14px; }
+
+  /* ===== NAV ===== */
+  .nav {
+    display: flex;
+    background: var(--dark2);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    flex: 0 0 auto;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    letter-spacing: 1px;
+  }
+  .nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* ===== CONTENT ===== */
+  .content { flex: 1; padding: 16px; padding-bottom: 24px; }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+    width: 100%;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: #000;
+  }
+  .btn-gold:hover { filter: brightness(1.1); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-green { background: var(--green); color: #000; }
+  .btn-red { background: var(--red); color: #fff; }
+  .btn-sm { padding: 8px 14px; font-size: 13px; width: auto; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ===== GRID BUTTONS ===== */
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .btn-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  /* ===== INPUT ===== */
+  .input-wrap { margin-bottom: 12px; }
+  .input-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
+  .input {
+    width: 100%;
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input:focus { border-color: var(--gold); }
+  .input::placeholder { color: var(--muted); }
+
+  /* ===== BET PRESETS ===== */
+  .bet-presets { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .preset-btn {
+    padding: 6px 12px;
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+  .preset-btn:hover, .preset-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(255,215,0,0.08); }
+
+  /* ===== RESULT ===== */
+  .result-box {
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    margin-top: 12px;
+    animation: fadeIn 0.3s ease;
+  }
+  .result-win { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); }
+  .result-lose { background: rgba(255,68,102,0.1); border: 1px solid rgba(255,68,102,0.3); }
+  .result-amount { font-family: 'Orbitron', monospace; font-size: 24px; font-weight: 900; }
+  .result-win .result-amount { color: var(--green); }
+  .result-lose .result-amount { color: var(--red); }
+  .result-label { font-size: 13px; color: var(--muted); margin-top: 4px; letter-spacing: 1px; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes rocketFly { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.1); } 100% { transform: translateY(0) scale(1); } }
+  @keyframes crash { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* ===== CRASH GAME ===== */
+  .crash-display {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .crash-multiplier {
+    font-family: 'Orbitron', monospace;
+    font-size: 48px;
+    font-weight: 900;
+    transition: color 0.3s;
+  }
+  .crash-multiplier.flying { color: var(--green); animation: rocketFly 0.5s ease infinite; }
+  .crash-multiplier.crashed { color: var(--red); animation: crash 0.5s ease forwards; }
+  .crash-multiplier.idle { color: var(--gold); }
+  .crash-rocket { font-size: 32px; }
+  .crash-status { font-size: 12px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+
+  /* ===== SLOTS ===== */
+  .slots-display {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .slot-reel {
+    flex: 1;
+    background: var(--dark2);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .slot-reel.spinning {
+    border-color: var(--gold);
+    animation: spin 0.3s linear infinite;
+  }
+  .slot-reel.win { border-color: var(--green); box-shadow: 0 0 20px rgba(0,255,136,0.3); }
+
+  /* ===== BLACKJACK ===== */
+  .bj-table {
+    background: linear-gradient(135deg, #0d2818, #0a1f12);
+    border: 2px solid #1a4a2a;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    min-height: 200px;
+  }
+  .bj-section-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .bj-hand { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; min-height: 60px; align-items: center; }
+  .bj-card {
+    background: white;
+    color: #000;
+    border-radius: 6px;
+    width: 42px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 900;
+    border: 1px solid #ddd;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+    animation: slideIn 0.2s ease;
+    flex-shrink: 0;
+    font-family: 'Rajdhani', sans-serif;
+  }
+  .bj-card.red { color: var(--red); }
+  .bj-card.back {
+    background: linear-gradient(135deg, #1a3a8f, #0d2060);
+    color: white;
+    font-size: 20px;
+  }
+  .bj-score {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-top: 4px;
+  }
+  .bj-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 8px 0; }
+
+  /* ===== ROULETTE ===== */
+  .roulette-wheel {
+    width: 150px; height: 150px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: conic-gradient(
+      #c0392b 0deg 9.73deg, #1a1a1a 9.73deg 19.46deg, #c0392b 19.46deg 29.19deg,
+      #1a1a1a 29.19deg 38.92deg, #c0392b 38.92deg 48.65deg, #1a1a1a 48.65deg 58.38deg,
+      #c0392b 58.38deg 68.11deg, #1a1a1a 68.11deg 77.84deg, #c0392b 77.84deg 87.57deg,
+      #2ecc71 87.57deg 97.3deg, #c0392b 97.3deg 107.03deg, #1a1a1a 107.03deg 116.76deg,
+      #c0392b 116.76deg 126.49deg, #1a1a1a 126.49deg 136.22deg, #c0392b 136.22deg 145.95deg,
+      #1a1a1a 145.95deg 155.68deg, #c0392b 155.68deg 165.41deg, #1a1a1a 165.41deg 175.14deg,
+      #c0392b 175.14deg 184.87deg, #1a1a1a 184.87deg 194.6deg, #c0392b 194.6deg 204.33deg,
+      #1a1a1a 204.33deg 214.06deg, #c0392b 214.06deg 223.79deg, #1a1a1a 223.79deg 233.52deg,
+      #c0392b 233.52deg 243.25deg, #1a1a1a 243.25deg 252.98deg, #c0392b 252.98deg 262.71deg,
+      #1a1a1a 262.71deg 272.44deg, #c0392b 272.44deg 282.17deg, #1a1a1a 282.17deg 291.9deg,
+      #c0392b 291.9deg 301.63deg, #1a1a1a 301.63deg 311.36deg, #c0392b 311.36deg 321.09deg,
+      #1a1a1a 321.09deg 330.82deg, #c0392b 330.82deg 340.55deg, #1a1a1a 340.55deg 350.28deg,
+      #c0392b 350.28deg 360deg
+    );
+    border: 4px solid var(--gold);
+    box-shadow: 0 0 30px rgba(255,215,0,0.2);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 2s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+    position: relative;
+  }
+  .roulette-center {
+    width: 36px; height: 36px;
+    background: var(--dark);
+    border-radius: 50%;
+    border: 3px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gold);
+    z-index: 2;
+  }
+  .roulette-bet-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .roulette-type-btn {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--dark2);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  .roulette-type-btn.selected { border-color: var(--gold); background: rgba(255,215,0,0.1); color: var(--gold); }
+  .roulette-type-btn:active { transform: scale(0.97); }
+
+  /* ===== KENO ===== */
+  .keno-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .keno-num {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.12s;
+    font-family: 'Rajdhani', sans-serif;
+  }
+  .keno-num:active { transform: scale(0.9); }
+  .keno-num.selected { background: rgba(255,215,0,0.2); border-color: var(--gold); color: var(--gold); }
+  .keno-num.drawn { background: rgba(0,255,136,0.2); border-color: var(--green); color: var(--green); }
+  .keno-num.hit { background: rgba(255,215,0,0.4); border-color: var(--gold); color: var(--gold); animation: pulse 0.5s ease; }
+  .keno-info { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .keno-info span { font-weight: 700; color: var(--text); }
+
+  /* ===== LOADING ===== */
+  .loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 20px; color: var(--muted); font-size: 14px; }
+  .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.6s linear infinite; }
+
+  /* ===== PROFILE / STATS ===== */
+  .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { color: var(--muted); }
+  .stat-value { font-weight: 700; color: var(--text); }
+  .vip-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: #000; padding: 4px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  }
+
+  /* ===== TOP ===== */
+  .top-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .top-rank { font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 900; width: 30px; color: var(--muted); }
+  .top-rank.gold { color: #FFD700; }
+  .top-rank.silver { color: #C0C0C0; }
+  .top-rank.bronze { color: #CD7F32; }
+  .top-name { flex: 1; font-weight: 700; font-size: 15px; }
+  .top-balance { color: var(--gold); font-weight: 700; font-size: 14px; font-family: 'Orbitron', monospace; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ===== TELEGRAM SDK =====
+const tg = window.Telegram?.WebApp;
+const user = tg?.initDataUnsafe?.user;
+const API_URL = "https://YOUR_SERVER/api"; // ← замени на свой URL
+
+// ===== API =====
+async function apiCall(method, body = {}) {
+  try {
+    const res = await fetch(`${API_URL}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Init-Data": tg?.initData || "" },
+      body: JSON.stringify(body)
+    });
+    return await res.json();
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// ===== MOCK DATA (для демо без сервера) =====
+let mockBalance = 10000;
+function mockResult(bet, multiplier) {
+  const win = Math.floor(bet * multiplier);
+  mockBalance = mockBalance - bet + win;
+  return { ok: true, win, balance: mockBalance };
+}
+
+// ===== HEADER =====
+function Header({ balance, onProfile }) {
+  return (
+    <div className="header">
+      <div className="header-logo">ROYAL KENO</div>
+      <div className="header-balance" onClick={onProfile} style={{cursor:'pointer'}}>
+        <span className="star-icon">★</span>
+        <span>{balance.toLocaleString()}</span>
+      </div>
+    </div>
+  );
+}
+
+// ===== NAV =====
+const TABS = [
+  { id: "keno",      label: "🎰 KENO" },
+  { id: "crash",     label: "🚀 КРАШ" },
+  { id: "slots",     label: "🎰 СЛОТЫ" },
+  { id: "blackjack", label: "🃏 БЛЭКДЖЕК" },
+  { id: "roulette",  label: "🎡 РУЛЕТКА" },
+  { id: "profile",   label: "👑 ПРОФИЛЬ" },
+];
+
+function Nav({ active, onChange }) {
+  return (
+    <div className="nav">
+      {TABS.map(t => (
+        <button key={t.id} className={`nav-btn ${active === t.id ? "active" : ""}`} onClick={() => onChange(t.id)}>
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ===== BET INPUT =====
+function BetInput({ value, onChange, balance }) {
+  const presets = [100, 500, 1000, 5000];
+  return (
+    <div>
+      <div className="input-wrap">
+        <div className="input-label">Ставка (★)</div>
+        <input className="input" type="number" value={value} onChange={e => onChange(Number(e.target.value))} placeholder="Введите ставку..." />
+      </div>
+      <div className="bet-presets">
+        {presets.map(p => (
+          <button key={p} className={`preset-btn ${value === p ? "active" : ""}`} onClick={() => onChange(p)}>
+            {p.toLocaleString()}
+          </button>
+        ))}
+        <button className="preset-btn" onClick={() => onChange(Math.floor(balance / 2))}>½</button>
+        <button className="preset-btn" onClick={() => onChange(balance)}>MAX</button>
+      </div>
+    </div>
+  );
+}
+
+// ===== CRASH GAME =====
+function CrashGame({ balance, onBalanceChange }) {
+  const [bet, setBet] = useState(100);
+  const [target, setTarget] = useState(2.0);
+  const [state, setState] = useState("idle"); // idle | flying | crashed | won
+  const [current, setCurrent] = useState(1.0);
+  const [crashAt, setCrashAt] = useState(null);
+  const [result, setResult] = useState(null);
+  const intervalRef = useRef(null);
+
+  const PRESETS = [1.5, 2.0, 3.0, 5.0, 10.0];
+
+  function generateCrash() {
+    const r = Math.random();
+    if (r < 0.05) return 1.0;
+    return Math.min(Math.round((0.95 / r) * 100) / 100, 100);
+  }
+
+  function startGame() {
+    if (bet < 50 || bet > balance) return;
+    const cp = generateCrash();
+    setCrashAt(cp);
+    setState("flying");
+    setCurrent(1.0);
+    setResult(null);
+    onBalanceChange(b => b - bet);
+
+    let cur = 1.0;
+    intervalRef.current = setInterval(() => {
+      cur = Math.round((cur + (cur * 0.03)) * 100) / 100;
+      setCurrent(cur);
+
+      if (cur >= target) {
+        clearInterval(intervalRef.current);
+        const win = Math.floor(bet * target);
+        onBalanceChange(b => b + win);
+        setState("won");
+        setResult({ win, profit: win - bet });
+        apiCall("play", { game: "crash", bet, target, crash_point: cp });
+        return;
+      }
+      if (cur >= cp) {
+        clearInterval(intervalRef.current);
+        setState("crashed");
+        setResult({ win: 0, profit: -bet });
+        apiCall("play", { game: "crash", bet, target, crash_point: cp });
+      }
+    }, 150);
+  }
+
+  useEffect(() => () => clearInterval(intervalRef.current), []);
+
+  return (
+    <div>
+      <div className="crash-display">
+        <div className={`crash-multiplier ${state === "flying" ? "flying" : state === "crashed" ? "crashed" : "idle"}`}>
+          x{current.toFixed(2)}
+        </div>
+        <div className="crash-status">
+          {state === "idle" && "ОЖИДАНИЕ СТАРТА"}
+          {state === "flying" && "🚀 ЛЕТИТ..."}
+          {state === "crashed" && `💥 УПАЛ НА x${crashAt}`}
+          {state === "won" && `✅ ЗАБРАЛИ НА x${target}`}
+        </div>
+      </div>
+
+      {(state === "idle" || state === "crashed" || state === "won") && (
+        <>
+          <BetInput value={bet} onChange={setBet} balance={balance} />
+          <div className="card">
+            <div className="card-title">Забрать на</div>
+            <div className="btn-grid-3" style={{marginBottom:8}}>
+              {PRESETS.map(p => (
+                <button key={p} className={`preset-btn ${target === p ? "active" : ""}`} onClick={() => setTarget(p)}>x{p}</button>
+              ))}
+            </div>
+            <div className="input-wrap" style={{marginBottom:0}}>
+              <input className="input" type="number" step="0.01" value={target}
+                onChange={e => setTarget(Math.max(1.01, Math.min(100, parseFloat(e.target.value) || 1.01)))} />
+            </div>
+          </div>
+          <button className="btn btn-gold" onClick={startGame} disabled={bet < 50 || bet > balance}>
+            🚀 ЗАПУСТИТЬ
+          </button>
+        </>
+      )}
+
+      {result && (
+        <div className={`result-box ${result.win > 0 ? "result-win" : "result-lose"}`}>
+          <div className="result-amount">{result.win > 0 ? `+${result.win.toLocaleString()}` : `${result.profit.toLocaleString()}`} ★</div>
+          <div className="result-label">{result.win > 0 ? "ВЫИГРЫШ" : "ПРОИГРЫШ"}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===== SLOTS =====
+const SYMBOLS = ["🍋","🍊","🍇","🔔","💎","7️⃣","🎰"];
+const WEIGHTS  = [30,25,20,12,8,4,1];
+const PAYOUTS  = {"🍋":2,"🍊":3,"🍇":5,"🔔":10,"💎":25,"7️⃣":50,"🎰":200};
+
+function weightedRandom() {
+  const total = WEIGHTS.reduce((a,b) => a+b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < SYMBOLS.length; i++) {
+    r -= WEIGHTS[i];
+    if (r <= 0) return SYMBOLS[i];
+  }
+  return SYMBOLS[0];
+}
+
+function SlotsGame({ balance, onBalanceChange }) {
+  const [bet, setBet] = useState(100);
+  const [reels, setReels] = useState(["🎰","🎰","🎰"]);
+  const [spinning, setSpinning] = useState([false,false,false]);
+  const [result, setResult] = useState(null);
+  const [playing, setPlaying] = useState(false);
+
+  function spin() {
+    if (bet < 50 || bet > balance || playing) return;
+    setPlaying(true);
+    setResult(null);
+    onBalanceChange(b => b - bet);
+
+    const final = [weightedRandom(), weightedRandom(), weightedRandom()];
+    setSpinning([true,true,true]);
+
+    [0,1,2].forEach(i => {
+      setTimeout(() => {
+        setSpinning(s => { const n=[...s]; n[i]=false; return n; });
+        setReels(r => { const n=[...r]; n[i]=final[i]; return n; });
+        if (i === 2) {
+          const [a,b2,c] = final;
+          let win = 0, text = "";
+          if (a===b2 && b2===c) { win = Math.floor(bet * PAYOUTS[a]); text = `Три ${a}! x${PAYOUTS[a]}`; }
+          else if (a===b2||b2===c||a===c) { win = Math.floor(bet * 0.5); text = "Два совпадения! x0.5"; }
+          else text = "Нет совпадений";
+          if (win > 0) onBalanceChange(b => b + win);
+          setResult({ win, profit: win - bet, text });
+          setPlaying(false);
+          apiCall("play", { game: "slots", bet, reels: final, win });
+        }
+      }, 500 + i * 300);
+    });
+  }
+
+  return (
+    <div>
+      <div className="slots-display">
+        {reels.map((sym, i) => (
+          <div key={i} className={`slot-reel ${spinning[i] ? "spinning" : ""} ${result?.win > 0 && !spinning[i] ? "win" : ""}`}>
+            {spinning[i] ? "🎲" : sym}
+          </div>
+        ))}
+      </div>
+      <BetInput value={bet} onChange={setBet} balance={balance} />
+      <button className="btn btn-gold" onClick={spin} disabled={playing || bet < 50 || bet > balance}>
+        {playing ? "⏳ КРУТИМ..." : "🎰 КРУТИТЬ"}
+      </button>
+      {result && (
+        <div className={`result-box ${result.win > 0 ? "result-win" : "result-lose"}`}>
+          <div className="result-amount">{result.win > 0 ? `+${result.win.toLocaleString()}` : `${result.profit.toLocaleString()}`} ★</div>
+          <div className="result-label">{result.text}</div>
+        </div>
+      )}
+      <div className="card" style={{marginTop:12}}>
+        <div className="card-title">Таблица выплат</div>
+        {Object.entries(PAYOUTS).map(([sym,mult]) => (
+          <div key={sym} className="stat-row">
+            <span className="stat-label">{sym} {sym} {sym}</span>
+            <span className="stat-value">x{mult}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ===== BLACKJACK =====
+const SUITS2 = ["♠","♥","♦","♣"];
+const VALS = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+function newDeck() { return VALS.flatMap(v => SUITS2.map(s => v+s)).sort(() => Math.random()-0.5); }
+function cardVal(c) {
+  const v = c.slice(0,-1);
+  if (["J","Q","K"].includes(v)) return 10;
+  if (v==="A") return 11;
+  return parseInt(v);
+}
+function handVal(hand) {
+  let t = hand.reduce((a,c) => a+cardVal(c), 0);
+  let aces = hand.filter(c => c.startsWith("A")).length;
+  while (t > 21 && aces) { t -= 10; aces--; }
+  return t;
+}
+function isRed(c) { return c.endsWith("♥") || c.endsWith("♦"); }
+
+function BJCard({ card, hidden }) {
+  if (hidden) return <div className="bj-card back">🂠</div>;
+  return <div className={`bj-card ${isRed(card) ? "red" : ""}`}>{card}</div>;
+}
+
+function BlackjackGame({ balance, onBalanceChange }) {
+  const [bet, setBet] = useState(100);
+  const [state, setState] = useState("betting"); // betting | playing | done
+  const [deck, setDeck] = useState([]);
+  const [player, setPlayer] = useState([]);
+  const [dealer, setDealer] = useState([]);
+  const [result, setResult] = useState(null);
+
+  function deal() {
+    if (bet < 50 || bet > balance) return;
+    const d = newDeck();
+    const p = [d.pop(), d.pop()];
+    const dl = [d.pop(), d.pop()];
+    setDeck(d); setPlayer(p); setDealer(dl); setResult(null);
+    onBalanceChange(b => b - bet);
+    setState("playing");
+    if (handVal(p) === 21) { setTimeout(() => stand(p, dl, d, bet), 300); }
+  }
+
+  function hit() {
+    const d = [...deck];
+    const p = [...player, d.pop()];
+    setDeck(d); setPlayer(p);
+    const v = handVal(p);
+    if (v > 21) { finish(p, dealer, bet, "bust"); }
+    else if (v === 21) { setTimeout(() => stand(p, dealer, d, bet), 300); }
+  }
+
+  function stand(p = player, dl = dealer, d = deck, b = bet) {
+    const finalDl = [...dl];
+    const finalD = [...d];
+    while (handVal(finalDl) < 17) finalDl.push(finalD.pop());
+    setDealer(finalDl);
+    finish(p, finalDl, b, "stand");
+  }
+
+  function double() {
+    if (balance < bet) return;
+    onBalanceChange(b => b - bet);
+    const nb = bet * 2;
+    const d = [...deck];
+    const p = [...player, d.pop()];
+    setDeck(d); setPlayer(p);
+    const v = handVal(p);
+    if (v > 21) finish(p, dealer, nb, "bust");
+    else stand(p, dealer, d, nb);
+  }
+
+  function finish(p, dl, b, reason) {
+    const pv = handVal(p);
+    const dv = handVal(dl);
+    let win = 0, text = "";
+    if (reason === "bust") { text = "💥 Перебор!"; }
+    else if (pv === 21 && p.length === 2) { win = Math.floor(b * 2.5); text = "🎉 БЛЭКДЖЕК! x2.5"; }
+    else if (dv > 21 || pv > dv) { win = b * 2; text = "🎉 Победа!"; }
+    else if (pv === dv) { win = b; text = "🤝 Ничья"; }
+    else { text = "😔 Дилер победил"; }
+    if (win > 0) onBalanceChange(b2 => b2 + win);
+    setResult({ win, profit: win - b, text });
+    setState("done");
+    apiCall("play", { game: "blackjack", bet: b, player_val: pv, dealer_val: dv, win });
+  }
+
+  return (
+    <div>
+      <div className="bj-table">
+        {state !== "betting" && (
+          <>
+            <div className="bj-section-label">Дилер {state === "done" ? `(${handVal(dealer)})` : ""}</div>
+            <div className="bj-hand">
+              {dealer.map((c, i) => <BJCard key={i} card={c} hidden={state === "playing" && i === 1} />)}
+            </div>
+            <hr className="bj-divider" />
+            <div className="bj-section-label">Вы ({handVal(player)})</div>
+            <div className="bj-hand">
+              {player.map((c, i) => <BJCard key={i} card={c} />)}
+            </div>
+          </>
+        )}
+        {state === "betting" && (
+          <div style={{textAlign:"center",padding:"20px 0",color:"var(--muted)"}}>
+            <div style={{fontSize:40,marginBottom:8}}>🃏</div>
+            <div style={{fontSize:13,letterSpacing:2}}>УКАЖИТЕ СТАВКУ И НАЧНИТЕ ИГРУ</div>
+          </div>
+        )}
+      </div>
+
+      {(state === "betting" || state === "done") && (
+        <BetInput value={bet} onChange={setBet} balance={balance} />
+      )}
+
+      {state === "betting" && (
+        <button className="btn btn-gold" onClick={deal} disabled={bet < 50 || bet > balance}>
+          🃏 РАЗДАТЬ КАРТЫ
+        </button>
+      )}
+
+      {state === "playing" && (
+        <div className="btn-grid" style={{gap:8}}>
+          <button className="btn btn-green btn-sm" style={{width:"100%"}} onClick={hit}>👊 ЕЩЁ</button>
+          <button className="btn btn-outline btn-sm" style={{width:"100%"}} onClick={() => stand()}>✋ СТОП</button>
+          {player.length === 2 && balance >= bet && (
+            <button className="btn btn-gold" style={{gridColumn:"span 2"}} onClick={double}>💰 УДВОИТЬ</button>
+          )}
+        </div>
+      )}
+
+      {state === "done" && result && (
+        <>
+          <div className={`result-box ${result.win > 0 ? "result-win" : "result-lose"}`}>
+            <div className="result-amount">{result.win > 0 ? `+${result.win.toLocaleString()}` : `${result.profit.toLocaleString()}`} ★</div>
+            <div className="result-label">{result.text}</div>
+          </div>
+          <button className="btn btn-gold" style={{marginTop:8}} onClick={() => setState("betting")}>🔄 ЕЩЁE РАЗ</button>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ===== ROULETTE =====
+const RED_NUMS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+const BET_TYPES = [
+  { id:"red",   label:"🔴 КРАСНОЕ",  mult:2 },
+  { id:"black", label:"⚫ ЧЁРНОЕ",   mult:2 },
+  { id:"even",  label:"ЧЁТНОЕ",      mult:2 },
+  { id:"odd",   label:"НЕЧЁТНОЕ",    mult:2 },
+  { id:"1-18",  label:"1–18",        mult:2 },
+  { id:"19-36", label:"19–36",       mult:2 },
+];
+
+function RouletteGame({ balance, onBalanceChange }) {
+  const [bet, setBet] = useState(100);
+  const [betType, setBetType] = useState("red");
+  const [spinning, setSpinning] = useState(false);
+  const [result, setResult] = useState(null);
+  const [rotation, setRotation] = useState(0);
+  const [lastNum, setLastNum] = useState(null);
+
+  function spin() {
+    if (bet < 50 || bet > balance || spinning) return;
+    setSpinning(true);
+    setResult(null);
+    onBalanceChange(b => b - bet);
+
+    const num = Math.floor(Math.random() * 37);
+    setLastNum(num);
+    setRotation(r => r + 1440 + Math.random() * 360);
+
+    setTimeout(() => {
+      const color = num === 0 ? "green" : RED_NUMS.has(num) ? "red" : "black";
+      let win = 0;
+      if (betType==="red" && color==="red") win = bet*2;
+      else if (betType==="black" && color==="black") win = bet*2;
+      else if (betType==="even" && num!==0 && num%2===0) win = bet*2;
+      else if (betType==="odd" && num%2===1) win = bet*2;
+      else if (betType==="1-18" && num>=1 && num<=18) win = bet*2;
+      else if (betType==="19-36" && num>=19 && num<=36) win = bet*2;
+      if (win > 0) onBalanceChange(b => b + win);
+      setResult({ win, profit: win-bet, num, color });
+      setSpinning(false);
+      apiCall("play", { game: "roulette", bet, bet_type: betType, result: num, win });
+    }, 2200);
+  }
+
+  return (
+    <div>
+      <div className="roulette-wheel" style={{transform:`rotate(${rotation}deg)`}}>
+        <div className="roulette-center">{lastNum ?? "?"}</div>
+      </div>
+
+      <div className="roulette-bet-types">
+        {BET_TYPES.map(t => (
+          <button key={t.id} className={`roulette-type-btn ${betType===t.id?"selected":""}`} onClick={() => setBetType(t.id)}>
+            {t.label} <span style={{color:"var(--muted)",fontSize:11}}>x{t.mult}</span>
+          </button>
+        ))}
+      </div>
+
+      <BetInput value={bet} onChange={setBet} balance={balance} />
+      <button className="btn btn-gold" onClick={spin} disabled={spinning || bet < 50 || bet > balance}>
+        {spinning ? "⏳ КРУТИТСЯ..." : "🎡 КРУТИТЬ"}
+      </button>
+
+      {result && (
+        <div className={`result-box ${result.win>0?"result-win":"result-lose"}`}>
+          <div style={{fontSize:20,marginBottom:4}}>
+            Выпало: <b style={{color: result.color==="red"?"var(--red)":result.color==="green"?"var(--green)":"var(--text)"}}>
+              {result.num} {result.color==="red"?"🔴":result.color==="green"?"🟢":"⚫"}
+            </b>
+          </div>
+          <div className="result-amount">{result.win>0?`+${result.win.toLocaleString()}`:`${result.profit.toLocaleString()}`} ★</div>
+          <div className="result-label">{result.win>0?"ВЫИГРЫШ":"ПРОИГРЫШ"}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===== KENO =====
+const KENO_PAYOUTS = {1:{1:3},2:{2:12},3:{2:1,3:42},4:{2:1,3:4,4:120},5:{3:1,4:8,5:800},
+  6:{3:1,4:4,5:88,6:1500},7:{4:1,5:18,6:300,7:4500},8:{5:9,6:90,7:1500,8:10000},
+  9:{4:1,5:6,6:44,7:300,8:4000,9:25000},10:{5:2,6:20,7:142,8:1000,9:4500,10:100000}};
+
+function KenoGame({ balance, onBalanceChange }) {
+  const [bet, setBet] = useState(100);
+  const [selected, setSelected] = useState(new Set());
+  const [drawn, setDrawn] = useState(new Set());
+  const [hits, setHits] = useState(new Set());
+  const [result, setResult] = useState(null);
+  const [playing, setPlaying] = useState(false);
+  const maxSelect = 10;
+
+  function toggleNum(n) {
+    if (playing) return;
+    setSelected(s => {
+      const ns = new Set(s);
+      if (ns.has(n)) ns.delete(n);
+      else if (ns.size < maxSelect) ns.add(n);
+      return ns;
+    });
+    setDrawn(new Set()); setHits(new Set()); setResult(null);
+  }
+
+  function play() {
+    if (selected.size === 0 || bet < 50 || bet > balance || playing) return;
+    setPlaying(true);
+    setResult(null);
+    onBalanceChange(b => b - bet);
+
+    const drawnNums = new Set();
+    while (drawnNums.size < 20) drawnNums.add(Math.floor(Math.random()*80)+1);
+
+    const hitNums = new Set([...selected].filter(n => drawnNums.has(n)));
+    const spot = selected.size;
+    const h = hitNums.size;
+    const mult = KENO_PAYOUTS[spot]?.[h] || 0;
+    const win = Math.floor(bet * mult);
+    if (win > 0) onBalanceChange(b => b + win);
+
+    // Анимируем появление чисел
+    let i = 0;
+    const arr = [...drawnNums];
+    const interval = setInterval(() => {
+      setDrawn(d => new Set([...d, arr[i]]));
+      if (hitNums.has(arr[i])) setHits(h2 => new Set([...h2, arr[i]]));
+      i++;
+      if (i >= arr.length) {
+        clearInterval(interval);
+        setResult({ win, profit: win-bet, hits: h, spot, mult });
+        setPlaying(false);
+        apiCall("play", { game: "keno", bet, spot, hits: h, win });
+      }
+    }, 80);
+  }
+
+  return (
+    <div>
+      <div className="keno-info">
+        <span>Выбрано: <span>{selected.size}/{maxSelect}</span></span>
+        <span>Выпало: <span>{drawn.size}/20</span></span>
+        <span>Совпало: <span style={{color:"var(--gold)"}}>{hits.size}</span></span>
+      </div>
+
+      <div className="keno-grid">
+        {Array.from({length:80},(_,i)=>i+1).map(n => {
+          const isSel = selected.has(n);
+          const isHit = hits.has(n);
+          const isDrn = drawn.has(n) && !isHit;
+          return (
+            <div key={n} className={`keno-num ${isSel&&!isDrn&&!isHit?"selected":""} ${isDrn?"drawn":""} ${isHit?"hit":""}`}
+              onClick={() => toggleNum(n)}>
+              {n}
+            </div>
+          );
+        })}
+      </div>
+
+      <BetInput value={bet} onChange={setBet} balance={balance} />
+
+      <div className="btn-grid" style={{marginBottom:8}}>
+        <button className="btn btn-outline" onClick={() => { setSelected(new Set()); setDrawn(new Set()); setHits(new Set()); setResult(null); }}>
+          ОЧИСТИТЬ
+        </button>
+        <button className="btn btn-outline" onClick={() => {
+          const nums = new Set();
+          while (nums.size < maxSelect) nums.add(Math.floor(Math.random()*80)+1);
+          setSelected(nums); setDrawn(new Set()); setHits(new Set()); setResult(null);
+        }}>
+          АВТО
+        </button>
+      </div>
+
+      <button className="btn btn-gold" onClick={play} disabled={playing || selected.size === 0 || bet < 50 || bet > balance}>
+        {playing ? "⏳ ИДЁТ РОЗЫГРЫШ..." : "🎰 ИГРАТЬ"}
+      </button>
+
+      {result && (
+        <div className={`result-box ${result.win>0?"result-win":"result-lose"}`} style={{marginTop:12}}>
+          <div className="result-amount">{result.win>0?`+${result.win.toLocaleString()}`:`${result.profit.toLocaleString()}`} ★</div>
+          <div className="result-label">{result.hits} из {result.spot} • {result.mult>0?`x${result.mult}`:"Нет выплат"}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===== PROFILE =====
+function Profile({ balance }) {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    apiCall("profile").then(r => r.ok && setData(r.data));
+  }, []);
+
+  const mockData = { username: user?.first_name || "Игрок", vip: 1, total_bet: 15000, total_win: 12000, wins: 45, games: 120 };
+  const d = data || mockData;
+  const winrate = d.games > 0 ? ((d.wins/d.games)*100).toFixed(1) : 0;
+  const profit = d.total_win - d.total_bet;
+
+  return (
+    <div>
+      <div className="card" style={{textAlign:"center",marginBottom:16}}>
+        <div style={{fontSize:48,marginBottom:8}}>👑</div>
+        <div style={{fontSize:20,fontWeight:700,marginBottom:6}}>{d.username}</div>
+        <div><span className="vip-badge">★ VIP-{d.vip}</span></div>
+        <div style={{fontSize:28,fontFamily:"'Orbitron',monospace",fontWeight:900,color:"var(--gold)",marginTop:12}}>
+          {balance.toLocaleString()} ★
+        </div>
+      </div>
+      <div className="card">
+        <div className="card-title">Статистика</div>
+        <div className="stat-row"><span className="stat-label">Всего ставок</span><span className="stat-value">{d.total_bet.toLocaleString()} ★</span></div>
+        <div className="stat-row"><span className="stat-label">Всего выиграно</span><span className="stat-value">{d.total_win.toLocaleString()} ★</span></div>
+        <div className="stat-row"><span className="stat-label">Профит</span><span className="stat-value" style={{color:profit>=0?"var(--green)":"var(--red)"}}>{profit>=0?"+":""}{profit.toLocaleString()} ★</span></div>
+        <div className="stat-row"><span className="stat-label">Игр сыграно</span><span className="stat-value">{d.games}</span></div>
+        <div className="stat-row"><span className="stat-label">Побед</span><span className="stat-value">{d.wins}</span></div>
+        <div className="stat-row"><span className="stat-label">Винрейт</span><span className="stat-value" style={{color:"var(--gold)"}}>{winrate}%</span></div>
+      </div>
+    </div>
+  );
+}
+
+// ===== MAIN APP =====
+function App() {
+  const [tab, setTab] = useState("keno");
+  const [balance, setBalance] = useState(10000);
+
+  useEffect(() => {
+    tg?.ready();
+    tg?.expand();
+    tg?.setHeaderColor("#0a0a0f");
+    apiCall("balance").then(r => r.ok && setBalance(r.balance));
+  }, []);
+
+  const pages = {
+    keno:      <KenoGame      balance={balance} onBalanceChange={setBalance} />,
+    crash:     <CrashGame     balance={balance} onBalanceChange={setBalance} />,
+    slots:     <SlotsGame     balance={balance} onBalanceChange={setBalance} />,
+    blackjack: <BlackjackGame balance={balance} onBalanceChange={setBalance} />,
+    roulette:  <RouletteGame  balance={balance} onBalanceChange={setBalance} />,
+    profile:   <Profile balance={balance} />,
+  };
+
+  return (
+    <div className="app">
+      <Header balance={balance} onProfile={() => setTab("profile")} />
+      <Nav active={tab} onChange={setTab} />
+      <div className="content">
+        {pages[tab]}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById("root"));
+</script>
+</body>
+</html>
