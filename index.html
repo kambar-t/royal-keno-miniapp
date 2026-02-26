@@ -8,492 +8,624 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --gold:    #FFD700;
-    --gold2:   #FFA500;
-    --dark:    #0a0a0f;
-    --dark2:   #12121a;
-    --dark3:   #1a1a26;
-    --card:    #16161f;
-    --border:  #2a2a3a;
-    --green:   #00ff88;
-    --red:     #ff4466;
-    --blue:    #4488ff;
-    --purple:  #aa44ff;
-    --text:    #e8e8f0;
-    --muted:   #666680;
-  }
+:root {
+  --gold:     #D4AF37;
+  --gold2:    #F5D060;
+  --gold3:    #8B6914;
+  --emerald:  #00C878;
+  --emerald2: #00FF9A;
+  --ruby:     #E63950;
+  --obsidian: #050508;
+  --dark1:    #0C0C12;
+  --dark2:    #121218;
+  --dark3:    #1A1A24;
+  --dark4:    #222230;
+  --border:   rgba(212,175,55,0.15);
+  --border2:  rgba(212,175,55,0.35);
+  --text:     #EEE8D5;
+  --muted:    #5A5470;
+  --shadow:   0 8px 40px rgba(0,0,0,0.8);
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
 
-  body {
-    background: var(--dark);
-    color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 16px;
-    min-height: 100vh;
-    overflow-x: hidden;
-    background-image:
-      radial-gradient(ellipse at 20% 20%, rgba(255,215,0,0.04) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 80%, rgba(170,68,255,0.04) 0%, transparent 50%);
-  }
+html, body { height: 100%; overflow: hidden; }
 
-  /* ===== SCROLLBAR ===== */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: var(--dark2); }
-  ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+body {
+  background: var(--obsidian);
+  color: var(--text);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  position: relative;
+  overflow: hidden;
+}
 
-  /* ===== LAYOUT ===== */
-  .app { display: flex; flex-direction: column; min-height: 100vh; }
+/* ===== CANVAS BACKGROUND ===== */
+#bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
-  /* ===== HEADER ===== */
-  .header {
-    background: linear-gradient(135deg, var(--dark2), var(--dark3));
-    border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky; top: 0; z-index: 100;
-    backdrop-filter: blur(10px);
-  }
-  .header-logo {
-    font-family: 'Orbitron', monospace;
-    font-size: 14px;
-    font-weight: 900;
-    background: linear-gradient(135deg, var(--gold), var(--gold2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: 2px;
-  }
-  .header-balance {
-    display: flex; align-items: center; gap: 6px;
-    background: rgba(255,215,0,0.1);
-    border: 1px solid rgba(255,215,0,0.3);
-    padding: 6px 12px;
-    border-radius: 20px;
-  }
-  .header-balance span { font-size: 13px; font-weight: 700; color: var(--gold); }
-  .star-icon { font-size: 14px; }
+/* ===== APP SHELL ===== */
+.app {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  height: 100vh; height: 100dvh;
+  overflow: hidden;
+}
 
-  /* ===== NAV ===== */
-  .nav {
-    display: flex;
-    background: var(--dark2);
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .nav::-webkit-scrollbar { display: none; }
-  .nav-btn {
-    flex: 0 0 auto;
-    padding: 10px 16px;
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-    border-bottom: 2px solid transparent;
-    letter-spacing: 1px;
-  }
-  .nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+/* ===== HEADER ===== */
+.header {
+  flex-shrink: 0;
+  background: linear-gradient(180deg, rgba(12,12,18,0.98) 0%, rgba(12,12,18,0.92) 100%);
+  border-bottom: 1px solid var(--border2);
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  backdrop-filter: blur(20px);
+  position: relative;
+}
+.header::after {
+  content: '';
+  position: absolute; bottom: -1px; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.logo {
+  font-family: 'Cinzel', serif;
+  font-size: 15px; font-weight: 900;
+  letter-spacing: 3px;
+  background: linear-gradient(135deg, var(--gold3), var(--gold2), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 8px rgba(212,175,55,0.4));
+}
+.balance-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: linear-gradient(135deg, rgba(212,175,55,0.08), rgba(212,175,55,0.04));
+  border: 1px solid var(--border2);
+  padding: 6px 14px; border-radius: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative; overflow: hidden;
+}
+.balance-pill::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(212,175,55,0.1), transparent);
+  opacity: 0; transition: opacity 0.2s;
+}
+.balance-pill:active::before { opacity: 1; }
+.balance-pill .star { font-size: 13px; filter: drop-shadow(0 0 4px var(--gold)); }
+.balance-pill .amount { font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700; color: var(--gold2); letter-spacing: 1px; }
 
-  /* ===== CONTENT ===== */
-  .content { flex: 1; padding: 16px; padding-bottom: 24px; }
+/* ===== NAV ===== */
+.nav {
+  flex-shrink: 0;
+  display: flex;
+  background: var(--dark1);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto; scrollbar-width: none;
+  position: relative;
+}
+.nav::-webkit-scrollbar { display: none; }
+.nav-item {
+  flex: 0 0 auto;
+  padding: 9px 14px;
+  background: none; border: none;
+  color: var(--muted);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px; font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  position: relative;
+}
+.nav-item::after {
+  content: ''; position: absolute; bottom: 0; left: 50%; right: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold3), var(--gold2));
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-radius: 2px 2px 0 0;
+}
+.nav-item.active { color: var(--gold2); }
+.nav-item.active::after { left: 8px; right: 8px; }
 
-  /* ===== CARDS ===== */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-  }
-  .card-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--gold);
-    letter-spacing: 2px;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-  }
+/* ===== SCROLL AREA ===== */
+.scroll-area {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 16px 14px 32px;
+  scrollbar-width: thin; scrollbar-color: var(--gold3) transparent;
+}
+.scroll-area::-webkit-scrollbar { width: 3px; }
+.scroll-area::-webkit-scrollbar-thumb { background: var(--gold3); border-radius: 2px; }
 
-  /* ===== BUTTONS ===== */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 1px;
-    width: 100%;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-gold {
-    background: linear-gradient(135deg, var(--gold), var(--gold2));
-    color: #000;
-  }
-  .btn-gold:hover { filter: brightness(1.1); }
-  .btn-outline {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text);
-  }
-  .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
-  .btn-green { background: var(--green); color: #000; }
-  .btn-red { background: var(--red); color: #fff; }
-  .btn-sm { padding: 8px 14px; font-size: 13px; width: auto; }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* ===== CARDS ===== */
+.card {
+  background: linear-gradient(135deg, rgba(26,26,36,0.95), rgba(18,18,24,0.95));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  position: relative; overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent);
+}
+.card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 10px; font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
 
-  /* ===== GRID BUTTONS ===== */
-  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .btn-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding: 13px 20px;
+  border: none; border-radius: 10px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  position: relative; overflow: hidden;
+}
+.btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0.1);
+  opacity: 0; transition: opacity 0.15s;
+}
+.btn:active { transform: scale(0.97); }
+.btn:active::after { opacity: 1; }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 
-  /* ===== INPUT ===== */
-  .input-wrap { margin-bottom: 12px; }
-  .input-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
-  .input {
-    width: 100%;
-    background: var(--dark2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .input:focus { border-color: var(--gold); }
-  .input::placeholder { color: var(--muted); }
+.btn-gold {
+  background: linear-gradient(135deg, #8B6914, #D4AF37, #F5D060, #D4AF37);
+  background-size: 200% 200%; background-position: 0% 50%;
+  color: #1a1200;
+  box-shadow: 0 4px 20px rgba(212,175,55,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: all 0.3s;
+}
+.btn-gold:hover:not(:disabled) { background-position: 100% 50%; box-shadow: 0 6px 30px rgba(212,175,55,0.5); }
 
-  /* ===== BET PRESETS ===== */
-  .bet-presets { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-  .preset-btn {
-    padding: 6px 12px;
-    background: var(--dark2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--muted);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 1px;
-  }
-  .preset-btn:hover, .preset-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(255,215,0,0.08); }
+.btn-emerald {
+  background: linear-gradient(135deg, #006640, #00C878, #00FF9A);
+  color: #001a0d;
+  box-shadow: 0 4px 20px rgba(0,200,120,0.25);
+}
+.btn-ruby {
+  background: linear-gradient(135deg, #7a1020, #E63950, #ff6b7a);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(230,57,80,0.25);
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--gold);
+}
+.btn-ghost:hover:not(:disabled) { background: rgba(212,175,55,0.05); }
+.btn-sm { padding: 9px 16px; font-size: 11px; width: auto; }
 
-  /* ===== RESULT ===== */
-  .result-box {
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-    margin-top: 12px;
-    animation: fadeIn 0.3s ease;
-  }
-  .result-win { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); }
-  .result-lose { background: rgba(255,68,102,0.1); border: 1px solid rgba(255,68,102,0.3); }
-  .result-amount { font-family: 'Orbitron', monospace; font-size: 24px; font-weight: 900; }
-  .result-win .result-amount { color: var(--green); }
-  .result-lose .result-amount { color: var(--red); }
-  .result-label { font-size: 13px; color: var(--muted); margin-top: 4px; letter-spacing: 1px; }
+.btn-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
 
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  @keyframes rocketFly { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.1); } 100% { transform: translateY(0) scale(1); } }
-  @keyframes crash { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
-  @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+/* ===== INPUT ===== */
+.field { margin-bottom: 12px; }
+.field-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; font-weight: 700; }
+.input {
+  width: 100%;
+  background: rgba(5,5,8,0.8);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 14px;
+  color: var(--text);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 15px; font-weight: 600;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+}
+.input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,175,55,0.08); }
 
-  /* ===== CRASH GAME ===== */
-  .crash-display {
-    background: var(--dark2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    height: 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 16px;
-    position: relative;
-    overflow: hidden;
-  }
-  .crash-multiplier {
-    font-family: 'Orbitron', monospace;
-    font-size: 48px;
-    font-weight: 900;
-    transition: color 0.3s;
-  }
-  .crash-multiplier.flying { color: var(--green); animation: rocketFly 0.5s ease infinite; }
-  .crash-multiplier.crashed { color: var(--red); animation: crash 0.5s ease forwards; }
-  .crash-multiplier.idle { color: var(--gold); }
-  .crash-rocket { font-size: 32px; }
-  .crash-status { font-size: 12px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+/* ===== PRESETS ===== */
+.presets { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+.preset {
+  padding: 5px 10px;
+  background: rgba(212,175,55,0.05);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px; font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.5px;
+}
+.preset.on, .preset:active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.1); }
 
-  /* ===== SLOTS ===== */
-  .slots-display {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    margin-bottom: 16px;
-  }
-  .slot-reel {
-    flex: 1;
-    background: var(--dark2);
-    border: 2px solid var(--border);
-    border-radius: 10px;
-    height: 90px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
-  }
-  .slot-reel.spinning {
-    border-color: var(--gold);
-    animation: spin 0.3s linear infinite;
-  }
-  .slot-reel.win { border-color: var(--green); box-shadow: 0 0 20px rgba(0,255,136,0.3); }
+/* ===== RESULT ===== */
+.result {
+  border-radius: 12px; padding: 18px;
+  text-align: center; margin-top: 14px;
+  animation: resultPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative; overflow: hidden;
+}
+.result-win { background: rgba(0,200,120,0.08); border: 1px solid rgba(0,200,120,0.25); }
+.result-lose { background: rgba(230,57,80,0.08); border: 1px solid rgba(230,57,80,0.2); }
+.result-tie { background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.2); }
+.result-big { font-family: 'Cinzel', serif; font-size: 26px; font-weight: 900; }
+.result-win .result-big { color: var(--emerald2); text-shadow: 0 0 20px rgba(0,255,154,0.4); }
+.result-lose .result-big { color: var(--ruby); text-shadow: 0 0 20px rgba(230,57,80,0.3); }
+.result-tie .result-big { color: var(--gold2); }
+.result-sub { font-size: 11px; color: var(--muted); margin-top: 4px; letter-spacing: 2px; text-transform: uppercase; }
 
-  /* ===== BLACKJACK ===== */
-  .bj-table {
-    background: linear-gradient(135deg, #0d2818, #0a1f12);
-    border: 2px solid #1a4a2a;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    min-height: 200px;
-  }
-  .bj-section-label {
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-  .bj-hand { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; min-height: 60px; align-items: center; }
-  .bj-card {
-    background: white;
-    color: #000;
-    border-radius: 6px;
-    width: 42px;
-    height: 58px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 900;
-    border: 1px solid #ddd;
-    box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
-    animation: slideIn 0.2s ease;
-    flex-shrink: 0;
-    font-family: 'Rajdhani', sans-serif;
-  }
-  .bj-card.red { color: var(--red); }
-  .bj-card.back {
-    background: linear-gradient(135deg, #1a3a8f, #0d2060);
-    color: white;
-    font-size: 20px;
-  }
-  .bj-score {
-    font-family: 'Orbitron', monospace;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--gold);
-    margin-top: 4px;
-  }
-  .bj-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 8px 0; }
+@keyframes resultPop { from { opacity:0; transform: scale(0.85) translateY(10px); } to { opacity:1; transform: scale(1) translateY(0); } }
+@keyframes coinSpin { 0%,100% { transform: rotateY(0deg); } 50% { transform: rotateY(180deg); } }
+@keyframes glow { 0%,100% { box-shadow: 0 0 10px rgba(212,175,55,0.3); } 50% { box-shadow: 0 0 30px rgba(212,175,55,0.7), 0 0 60px rgba(212,175,55,0.3); } }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes cardDeal { from{opacity:0;transform:translateX(-30px) rotate(-5deg)} to{opacity:1;transform:translateX(0) rotate(0deg)} }
+@keyframes rocketPulse { 0%,100%{transform:scale(1) translateY(0)} 50%{transform:scale(1.08) translateY(-4px)} }
+@keyframes reelBlur { 0%,100%{filter:blur(0)} 50%{filter:blur(2px) brightness(1.3)} }
+@keyframes hitPulse { 0%{transform:scale(1);background:rgba(212,175,55,0.4)} 50%{transform:scale(1.3);background:rgba(212,175,55,0.7)} 100%{transform:scale(1);background:rgba(212,175,55,0.4)} }
 
-  /* ===== ROULETTE ===== */
-  .roulette-wheel {
-    width: 150px; height: 150px;
-    margin: 0 auto 16px;
-    border-radius: 50%;
-    background: conic-gradient(
-      #c0392b 0deg 9.73deg, #1a1a1a 9.73deg 19.46deg, #c0392b 19.46deg 29.19deg,
-      #1a1a1a 29.19deg 38.92deg, #c0392b 38.92deg 48.65deg, #1a1a1a 48.65deg 58.38deg,
-      #c0392b 58.38deg 68.11deg, #1a1a1a 68.11deg 77.84deg, #c0392b 77.84deg 87.57deg,
-      #2ecc71 87.57deg 97.3deg, #c0392b 97.3deg 107.03deg, #1a1a1a 107.03deg 116.76deg,
-      #c0392b 116.76deg 126.49deg, #1a1a1a 126.49deg 136.22deg, #c0392b 136.22deg 145.95deg,
-      #1a1a1a 145.95deg 155.68deg, #c0392b 155.68deg 165.41deg, #1a1a1a 165.41deg 175.14deg,
-      #c0392b 175.14deg 184.87deg, #1a1a1a 184.87deg 194.6deg, #c0392b 194.6deg 204.33deg,
-      #1a1a1a 204.33deg 214.06deg, #c0392b 214.06deg 223.79deg, #1a1a1a 223.79deg 233.52deg,
-      #c0392b 233.52deg 243.25deg, #1a1a1a 243.25deg 252.98deg, #c0392b 252.98deg 262.71deg,
-      #1a1a1a 262.71deg 272.44deg, #c0392b 272.44deg 282.17deg, #1a1a1a 282.17deg 291.9deg,
-      #c0392b 291.9deg 301.63deg, #1a1a1a 301.63deg 311.36deg, #c0392b 311.36deg 321.09deg,
-      #1a1a1a 321.09deg 330.82deg, #c0392b 330.82deg 340.55deg, #1a1a1a 340.55deg 350.28deg,
-      #c0392b 350.28deg 360deg
-    );
-    border: 4px solid var(--gold);
-    box-shadow: 0 0 30px rgba(255,215,0,0.2);
-    display: flex; align-items: center; justify-content: center;
-    transition: transform 2s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-    position: relative;
-  }
-  .roulette-center {
-    width: 36px; height: 36px;
-    background: var(--dark);
-    border-radius: 50%;
-    border: 3px solid var(--gold);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Orbitron', monospace;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--gold);
-    z-index: 2;
-  }
-  .roulette-bet-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-  .roulette-type-btn {
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--dark2);
-    color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.15s;
-    text-align: center;
-    letter-spacing: 1px;
-  }
-  .roulette-type-btn.selected { border-color: var(--gold); background: rgba(255,215,0,0.1); color: var(--gold); }
-  .roulette-type-btn:active { transform: scale(0.97); }
+/* ===== CRASH ===== */
+.crash-arena {
+  background: radial-gradient(ellipse at 50% 100%, rgba(0,200,120,0.06) 0%, transparent 70%),
+              linear-gradient(180deg, var(--dark1) 0%, var(--obsidian) 100%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  height: 200px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  margin-bottom: 14px; position: relative; overflow: hidden;
+}
+.crash-arena canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.crash-mult {
+  font-family: 'Cinzel', serif;
+  font-size: 54px; font-weight: 900;
+  position: relative; z-index: 2;
+  transition: color 0.3s, text-shadow 0.3s;
+  line-height: 1;
+}
+.crash-mult.idle { color: var(--gold2); text-shadow: 0 0 30px rgba(212,175,55,0.4); }
+.crash-mult.fly  { color: var(--emerald2); text-shadow: 0 0 40px rgba(0,255,154,0.6); animation: rocketPulse 0.4s ease infinite; }
+.crash-mult.boom { color: var(--ruby); text-shadow: 0 0 40px rgba(230,57,80,0.6); animation: shake 0.4s ease; }
+.crash-status { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; margin-top: 6px; position: relative; z-index: 2; }
+.crash-status.idle { color: var(--muted); }
+.crash-status.fly  { color: var(--emerald); }
+.crash-status.boom { color: var(--ruby); }
 
-  /* ===== KENO ===== */
-  .keno-grid {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 4px;
-    margin-bottom: 12px;
-  }
-  .keno-num {
-    aspect-ratio: 1;
-    border-radius: 6px;
-    background: var(--dark2);
-    border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.12s;
-    font-family: 'Rajdhani', sans-serif;
-  }
-  .keno-num:active { transform: scale(0.9); }
-  .keno-num.selected { background: rgba(255,215,0,0.2); border-color: var(--gold); color: var(--gold); }
-  .keno-num.drawn { background: rgba(0,255,136,0.2); border-color: var(--green); color: var(--green); }
-  .keno-num.hit { background: rgba(255,215,0,0.4); border-color: var(--gold); color: var(--gold); animation: pulse 0.5s ease; }
-  .keno-info { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-  .keno-info span { font-weight: 700; color: var(--text); }
+/* ===== SLOTS ===== */
+.slot-machine {
+  background: linear-gradient(180deg, var(--obsidian), var(--dark1));
+  border: 2px solid var(--border2);
+  border-radius: 16px;
+  padding: 16px 12px;
+  margin-bottom: 14px;
+  position: relative;
+  box-shadow: inset 0 2px 0 rgba(212,175,55,0.1), var(--shadow);
+}
+.slot-machine::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  border-radius: 16px 16px 0 0;
+}
+.reels-row { display: flex; gap: 8px; justify-content: center; }
+.reel-wrap {
+  flex: 1; height: 96px;
+  background: var(--obsidian);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden; position: relative;
+  box-shadow: inset 0 4px 12px rgba(0,0,0,0.6);
+}
+.reel-wrap.win-reel {
+  border-color: var(--gold);
+  box-shadow: 0 0 20px rgba(212,175,55,0.4), inset 0 4px 12px rgba(0,0,0,0.6);
+  animation: glow 1s ease infinite;
+}
+.reel-symbol {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 44px; line-height: 1;
+  transition: transform 0.15s;
+}
+.reel-wrap.spinning .reel-symbol { animation: reelBlur 0.2s linear infinite; }
+.slot-line {
+  position: absolute; top: 50%; left: 0; right: 0; height: 2px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,0.6), transparent);
+  pointer-events: none;
+}
 
-  /* ===== LOADING ===== */
-  .loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 20px; color: var(--muted); font-size: 14px; }
-  .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.6s linear infinite; }
+/* ===== BLACKJACK ===== */
+.felt {
+  background: radial-gradient(ellipse at 50% 100%, #0d3320 0%, #071a10 100%);
+  border: 2px solid rgba(0,80,30,0.6);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  min-height: 220px;
+  box-shadow: inset 0 2px 20px rgba(0,0,0,0.5), var(--shadow);
+  position: relative;
+}
+.felt::before {
+  content: '';
+  position: absolute; inset: 6px;
+  border: 1px solid rgba(0,100,40,0.3);
+  border-radius: 10px; pointer-events: none;
+}
+.hand-label { font-size: 9px; letter-spacing: 3px; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 6px; font-family: 'Cinzel', serif; }
+.hand { display: flex; gap: -6px; flex-wrap: nowrap; margin-bottom: 6px; min-height: 72px; align-items: center; }
+.playing-card {
+  width: 48px; height: 68px;
+  border-radius: 7px;
+  display: flex; flex-direction: column;
+  align-items: flex-start; justify-content: flex-start;
+  padding: 4px 5px;
+  font-size: 13px; font-weight: 900;
+  border: 1px solid rgba(0,0,0,0.2);
+  box-shadow: 2px 3px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+  flex-shrink: 0;
+  margin-right: -10px;
+  animation: cardDeal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-family: 'Cinzel', serif;
+  position: relative;
+}
+.playing-card.white { background: linear-gradient(135deg, #fff, #f0f0f0); color: #111; }
+.playing-card.red-card { background: linear-gradient(135deg, #fff, #f5e8e8); color: #c0392b; }
+.playing-card.back-card {
+  background: linear-gradient(135deg, #1a3a8f, #0d1f5f);
+  align-items: center; justify-content: center;
+  font-size: 24px;
+}
+.card-suit { font-size: 11px; position: absolute; bottom: 3px; right: 4px; opacity: 0.7; }
+.bj-score { font-family: 'Cinzel', serif; font-size: 20px; font-weight: 700; color: var(--gold2); margin-top: 6px; }
+.bj-divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 10px 0; }
 
-  /* ===== PROFILE / STATS ===== */
-  .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
-  .stat-row:last-child { border-bottom: none; }
-  .stat-label { color: var(--muted); }
-  .stat-value { font-weight: 700; color: var(--text); }
-  .vip-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: linear-gradient(135deg, var(--gold), var(--gold2));
-    color: #000; padding: 4px 10px; border-radius: 20px;
-    font-size: 12px; font-weight: 700; letter-spacing: 1px;
-  }
+/* ===== ROULETTE ===== */
+.wheel-stage {
+  display: flex; justify-content: center;
+  margin-bottom: 16px; position: relative;
+}
+.wheel-outer {
+  width: 160px; height: 160px; border-radius: 50%;
+  background: conic-gradient(
+    #c0392b 0 9.73deg,#111 9.73deg 19.46deg,#c0392b 19.46deg 29.19deg,
+    #111 29.19deg 38.92deg,#c0392b 38.92deg 48.65deg,#111 48.65deg 58.38deg,
+    #c0392b 58.38deg 68.11deg,#111 68.11deg 77.84deg,#c0392b 77.84deg 87.57deg,
+    #2ecc71 87.57deg 97.3deg,#c0392b 97.3deg 107.03deg,#111 107.03deg 116.76deg,
+    #c0392b 116.76deg 126.49deg,#111 126.49deg 136.22deg,#c0392b 136.22deg 145.95deg,
+    #111 145.95deg 155.68deg,#c0392b 155.68deg 165.41deg,#111 165.41deg 175.14deg,
+    #c0392b 175.14deg 184.87deg,#111 184.87deg 194.6deg,#c0392b 194.6deg 204.33deg,
+    #111 204.33deg 214.06deg,#c0392b 214.06deg 223.79deg,#111 223.79deg 233.52deg,
+    #c0392b 233.52deg 243.25deg,#111 243.25deg 252.98deg,#c0392b 252.98deg 262.71deg,
+    #111 262.71deg 272.44deg,#c0392b 272.44deg 282.17deg,#111 282.17deg 291.9deg,
+    #c0392b 291.9deg 301.63deg,#111 301.63deg 311.36deg,#c0392b 311.36deg 321.09deg,
+    #111 321.09deg 330.82deg,#c0392b 330.82deg 340.55deg,#111 340.55deg 350.28deg,
+    #c0392b 350.28deg 360deg
+  );
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 30px rgba(212,175,55,0.25), inset 0 0 20px rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 2.5s cubic-bezier(0.17, 0.67, 0.08, 1);
+}
+.wheel-inner {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: radial-gradient(circle, var(--dark2), var(--obsidian));
+  border: 2px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700;
+  color: var(--gold2);
+  box-shadow: 0 0 10px rgba(0,0,0,0.8);
+}
+.wheel-pointer {
+  position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 14px solid var(--gold);
+  filter: drop-shadow(0 0 4px var(--gold));
+}
+.bet-types { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 12px; }
+.bet-type-btn {
+  padding: 10px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(5,5,8,0.6);
+  color: var(--muted);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px; font-weight: 700;
+  cursor: pointer; text-align: center;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+.bet-type-btn.on { border-color: var(--gold); background: rgba(212,175,55,0.08); color: var(--gold2); }
+.bet-type-btn:active { transform: scale(0.96); }
 
-  /* ===== TOP ===== */
-  .top-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .top-rank { font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 900; width: 30px; color: var(--muted); }
-  .top-rank.gold { color: #FFD700; }
-  .top-rank.silver { color: #C0C0C0; }
-  .top-rank.bronze { color: #CD7F32; }
-  .top-name { flex: 1; font-weight: 700; font-size: 15px; }
-  .top-balance { color: var(--gold); font-weight: 700; font-size: 14px; font-family: 'Orbitron', monospace; }
+/* ===== KENO ===== */
+.keno-grid {
+  display: grid; grid-template-columns: repeat(10, 1fr);
+  gap: 3px; margin-bottom: 12px;
+}
+.kn {
+  aspect-ratio: 1; border-radius: 5px;
+  background: rgba(5,5,8,0.8);
+  border: 1px solid rgba(212,175,55,0.08);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; cursor: pointer;
+  transition: all 0.12s;
+  font-family: 'Montserrat', sans-serif;
+}
+.kn:active { transform: scale(0.85); }
+.kn.sel { background: rgba(212,175,55,0.15); border-color: var(--gold); color: var(--gold2); }
+.kn.drw { background: rgba(0,200,120,0.1); border-color: rgba(0,200,120,0.4); color: var(--emerald2); }
+.kn.hit { background: rgba(212,175,55,0.3); border-color: var(--gold); color: var(--gold2); animation: hitPulse 0.5s ease; }
+.keno-stats { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.keno-stat { text-align: center; }
+.keno-stat-v { font-family: 'Cinzel', serif; font-size: 18px; font-weight: 700; color: var(--gold2); }
+.keno-stat-l { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+/* ===== PROFILE ===== */
+.avatar-ring {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold3), var(--gold2), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px;
+  box-shadow: 0 0 30px rgba(212,175,55,0.3);
+  animation: glow 2s ease infinite;
+  font-size: 32px;
+}
+.vip-crown {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: linear-gradient(135deg, var(--gold3), var(--gold));
+  color: #1a1000; padding: 4px 12px; border-radius: 20px;
+  font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700;
+  letter-spacing: 2px;
+}
+.stat-line { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.stat-line:last-child { border: none; }
+.stat-k { color: var(--muted); font-size: 12px; }
+.stat-v { font-weight: 700; font-size: 13px; font-family: 'Cinzel', serif; }
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  background: rgba(18,18,24,0.95);
+  border: 1px solid var(--border2);
+  border-radius: 10px; padding: 10px 20px;
+  font-size: 13px; font-weight: 600;
+  color: var(--text);
+  z-index: 9999; white-space: nowrap;
+  backdrop-filter: blur(10px);
+  animation: slideUp 0.3s ease;
+  box-shadow: var(--shadow);
+}
+
+/* ===== PARTICLES ===== */
+.particle {
+  position: fixed; pointer-events: none; z-index: 9998;
+  font-size: 20px;
+  animation: particleFly 1.2s ease forwards;
+}
+@keyframes particleFly {
+  0%   { opacity:1; transform: translateY(0) scale(1) rotate(0deg); }
+  100% { opacity:0; transform: translateY(-120px) scale(0.3) rotate(360deg); }
+}
 </style>
 </head>
 <body>
+<canvas id="bg-canvas"></canvas>
 <div id="root"></div>
+
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 
-// ===== TELEGRAM SDK =====
+// ===== SETUP =====
 const tg = window.Telegram?.WebApp;
-const user = tg?.initDataUnsafe?.user;
-const API_URL = "https://YOUR_SERVER/api"; // ← замени на свой URL
+const API_URL = "https://YOUR_SERVER/api";
 
-// ===== API =====
-async function apiCall(method, body = {}) {
+async function api(method, body = {}) {
   try {
-    const res = await fetch(`${API_URL}/${method}`, {
+    const r = await fetch(`${API_URL}/${method}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Init-Data": tg?.initData || "" },
       body: JSON.stringify(body)
     });
-    return await res.json();
-  } catch (e) {
-    return { ok: false, error: e.message };
+    return await r.json();
+  } catch { return { ok: false }; }
+}
+
+// ===== AUDIO ENGINE =====
+class AudioEngine {
+  constructor() { this.ctx = null; }
+  init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+  beep(freq, dur, type = 'sine', vol = 0.15) {
+    if (!this.ctx) return;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.connect(g); g.connect(this.ctx.destination);
+    o.type = type; o.frequency.setValueAtTime(freq, this.ctx.currentTime);
+    g.gain.setValueAtTime(vol, this.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+    o.start(); o.stop(this.ctx.currentTime + dur);
+  }
+  win()    { this.beep(523,0.1); setTimeout(()=>this.beep(659,0.1),100); setTimeout(()=>this.beep(784,0.15),200); setTimeout(()=>this.beep(1047,0.3),300); }
+  lose()   { this.beep(330,0.1,'sawtooth'); setTimeout(()=>this.beep(220,0.3,'sawtooth'),100); }
+  click()  { this.beep(800,0.05,'square',0.05); }
+  tick()   { this.beep(1200,0.04,'square',0.08); }
+  deal()   { this.beep(600,0.08,'triangle',0.1); }
+  spin()   { this.beep(400,0.05,'sawtooth',0.06); }
+  rocket() { this.beep(200+Math.random()*400,0.1,'sine',0.05); }
+  jackpot(){ [523,659,784,1047,1319,1568].forEach((f,i)=>setTimeout(()=>this.beep(f,0.15),i*80)); }
+}
+const audio = new AudioEngine();
+
+// ===== BACKGROUND CANVAS =====
+function initBgCanvas() {
+  const canvas = document.getElementById("bg-canvas");
+  const ctx = canvas.getContext("2d");
+  let w, h, particles = [];
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener("resize", resize);
+  for (let i = 0; i < 60; i++) {
+    particles.push({
+      x: Math.random()*1000, y: Math.random()*1000,
+      vx: (Math.random()-0.5)*0.2, vy: (Math.random()-0.5)*0.2,
+      r: Math.random()*1.5+0.3, a: Math.random()
+    });
+  }
+  function frame() {
+    ctx.clearRect(0,0,w,h);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x<0) p.x=w; if (p.x>w) p.x=0;
+      if (p.y<0) p.y=h; if (p.y>h) p.y=0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(212,175,55,${p.a*0.15})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+// ===== PARTICLES BURST =====
+function burstParticles(x, y, win) {
+  const emojis = win ? ["⭐","✨","💰","🎉","💫"] : ["💨","🌫️"];
+  for (let i = 0; i < (win ? 8 : 3); i++) {
+    const el = document.createElement("div");
+    el.className = "particle";
+    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    el.style.left = (x + (Math.random()-0.5)*60) + "px";
+    el.style.top  = y + "px";
+    el.style.animationDelay = (Math.random()*0.3) + "s";
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
   }
 }
 
-// ===== MOCK DATA (для демо без сервера) =====
-let mockBalance = 10000;
-function mockResult(bet, multiplier) {
-  const win = Math.floor(bet * multiplier);
-  mockBalance = mockBalance - bet + win;
-  return { ok: true, win, balance: mockBalance };
-}
-
-// ===== HEADER =====
-function Header({ balance, onProfile }) {
-  return (
-    <div className="header">
-      <div className="header-logo">ROYAL KENO</div>
-      <div className="header-balance" onClick={onProfile} style={{cursor:'pointer'}}>
-        <span className="star-icon">★</span>
-        <span>{balance.toLocaleString()}</span>
-      </div>
-    </div>
-  );
-}
-
-// ===== NAV =====
-const TABS = [
-  { id: "keno",      label: "🎰 KENO" },
-  { id: "crash",     label: "🚀 КРАШ" },
-  { id: "slots",     label: "🎰 СЛОТЫ" },
-  { id: "blackjack", label: "🃏 БЛЭКДЖЕК" },
-  { id: "roulette",  label: "🎡 РУЛЕТКА" },
-  { id: "profile",   label: "👑 ПРОФИЛЬ" },
-];
-
-function Nav({ active, onChange }) {
-  return (
-    <div className="nav">
-      {TABS.map(t => (
-        <button key={t.id} className={`nav-btn ${active === t.id ? "active" : ""}`} onClick={() => onChange(t.id)}>
-          {t.label}
-        </button>
-      ))}
-    </div>
-  );
+// ===== TOAST =====
+let toastTimer;
+function showToast(msg) {
+  clearTimeout(toastTimer);
+  let t = document.querySelector(".toast");
+  if (!t) { t = document.createElement("div"); t.className = "toast"; document.body.appendChild(t); }
+  t.textContent = msg;
+  toastTimer = setTimeout(() => t?.remove(), 2500);
 }
 
 // ===== BET INPUT =====
@@ -501,114 +633,131 @@ function BetInput({ value, onChange, balance }) {
   const presets = [100, 500, 1000, 5000];
   return (
     <div>
-      <div className="input-wrap">
-        <div className="input-label">Ставка (★)</div>
-        <input className="input" type="number" value={value} onChange={e => onChange(Number(e.target.value))} placeholder="Введите ставку..." />
+      <div className="field">
+        <div className="field-label">Ставка ★</div>
+        <input className="input" type="number" value={value} onChange={e => onChange(Number(e.target.value))} />
       </div>
-      <div className="bet-presets">
+      <div className="presets">
         {presets.map(p => (
-          <button key={p} className={`preset-btn ${value === p ? "active" : ""}`} onClick={() => onChange(p)}>
-            {p.toLocaleString()}
-          </button>
+          <button key={p} className={`preset ${value===p?"on":""}`}
+            onClick={() => { audio.click(); onChange(p); }}>{p>=1000?p/1000+"K":p}</button>
         ))}
-        <button className="preset-btn" onClick={() => onChange(Math.floor(balance / 2))}>½</button>
-        <button className="preset-btn" onClick={() => onChange(balance)}>MAX</button>
+        <button className="preset" onClick={() => { audio.click(); onChange(Math.floor(balance/2)); }}>½</button>
+        <button className="preset" onClick={() => { audio.click(); onChange(balance); }}>MAX</button>
       </div>
     </div>
   );
 }
 
-// ===== CRASH GAME =====
-function CrashGame({ balance, onBalanceChange }) {
+// ===== CRASH =====
+function CrashGame({ balance, setBalance }) {
   const [bet, setBet] = useState(100);
   const [target, setTarget] = useState(2.0);
-  const [state, setState] = useState("idle"); // idle | flying | crashed | won
-  const [current, setCurrent] = useState(1.0);
+  const [phase, setPhase] = useState("idle");
+  const [mult, setMult] = useState(1.00);
   const [crashAt, setCrashAt] = useState(null);
   const [result, setResult] = useState(null);
-  const intervalRef = useRef(null);
+  const ivRef = useRef(null);
+  const canvasRef = useRef(null);
+  const pointsRef = useRef([]);
 
-  const PRESETS = [1.5, 2.0, 3.0, 5.0, 10.0];
-
-  function generateCrash() {
+  function genCrash() {
     const r = Math.random();
-    if (r < 0.05) return 1.0;
-    return Math.min(Math.round((0.95 / r) * 100) / 100, 100);
+    return r < 0.05 ? 1.0 : Math.min(Math.round((0.95/r)*100)/100, 100);
   }
 
-  function startGame() {
+  function drawGraph(cur) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0,0,w,h);
+    if (pointsRef.current.length < 2) return;
+    const pts = pointsRef.current;
+    const maxM = Math.max(...pts.map(p=>p.y), 2);
+    const toX = (i) => (i / (pts.length-1)) * w * 0.9 + w*0.05;
+    const toY = (v) => h - (v / maxM) * h * 0.85 - h*0.05;
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(pts[0].y));
+    pts.forEach((p,i) => i>0 && ctx.lineTo(toX(i), toY(p.y)));
+    const grad = ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0, "rgba(0,255,154,0.6)");
+    grad.addColorStop(1, "rgba(0,255,154,0)");
+    ctx.strokeStyle = "#00FF9A";
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = "#00FF9A";
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+  }
+
+  function start() {
     if (bet < 50 || bet > balance) return;
-    const cp = generateCrash();
-    setCrashAt(cp);
-    setState("flying");
-    setCurrent(1.0);
-    setResult(null);
-    onBalanceChange(b => b - bet);
-
+    audio.init();
+    const cp = genCrash();
+    setCrashAt(cp); setPhase("fly"); setResult(null);
+    setBalance(b => b - bet);
+    pointsRef.current = [{y:1}];
     let cur = 1.0;
-    intervalRef.current = setInterval(() => {
-      cur = Math.round((cur + (cur * 0.03)) * 100) / 100;
-      setCurrent(cur);
-
+    ivRef.current = setInterval(() => {
+      cur = Math.round((cur + cur*0.025)*100)/100;
+      setMult(cur);
+      pointsRef.current.push({y:cur});
+      drawGraph(cur);
+      audio.rocket();
       if (cur >= target) {
-        clearInterval(intervalRef.current);
+        clearInterval(ivRef.current);
         const win = Math.floor(bet * target);
-        onBalanceChange(b => b + win);
-        setState("won");
-        setResult({ win, profit: win - bet });
-        apiCall("play", { game: "crash", bet, target, crash_point: cp });
+        setBalance(b => b + win);
+        setPhase("idle"); setResult({win, profit: win-bet, ok:true});
+        audio.win();
+        burstParticles(window.innerWidth/2, 200, true);
+        api("play", {game:"crash", bet, win});
         return;
       }
       if (cur >= cp) {
-        clearInterval(intervalRef.current);
-        setState("crashed");
-        setResult({ win: 0, profit: -bet });
-        apiCall("play", { game: "crash", bet, target, crash_point: cp });
+        clearInterval(ivRef.current);
+        setPhase("boom"); setResult({win:0, profit:-bet, ok:false});
+        audio.lose();
+        setTimeout(() => setPhase("idle"), 1500);
+        api("play", {game:"crash", bet, win:0});
       }
-    }, 150);
+    }, 120);
   }
 
-  useEffect(() => () => clearInterval(intervalRef.current), []);
+  useEffect(() => () => clearInterval(ivRef.current), []);
+  const PRESETS = [1.5, 2.0, 3.0, 5.0, 10.0];
 
   return (
     <div>
-      <div className="crash-display">
-        <div className={`crash-multiplier ${state === "flying" ? "flying" : state === "crashed" ? "crashed" : "idle"}`}>
-          x{current.toFixed(2)}
-        </div>
-        <div className="crash-status">
-          {state === "idle" && "ОЖИДАНИЕ СТАРТА"}
-          {state === "flying" && "🚀 ЛЕТИТ..."}
-          {state === "crashed" && `💥 УПАЛ НА x${crashAt}`}
-          {state === "won" && `✅ ЗАБРАЛИ НА x${target}`}
+      <div className="crash-arena">
+        <canvas ref={canvasRef} style={{position:"absolute",inset:0,width:"100%",height:"100%"}}
+          width="400" height="200" />
+        <div className={`crash-mult ${phase}`}>{mult.toFixed(2)}x</div>
+        <div className={`crash-status ${phase}`}>
+          {phase==="idle" && "СТАВЬТЕ"}
+          {phase==="fly"  && "🚀 В ПОЛЁТЕ"}
+          {phase==="boom" && `💥 КРАШ ${crashAt}x`}
         </div>
       </div>
-
-      {(state === "idle" || state === "crashed" || state === "won") && (
-        <>
-          <BetInput value={bet} onChange={setBet} balance={balance} />
-          <div className="card">
-            <div className="card-title">Забрать на</div>
-            <div className="btn-grid-3" style={{marginBottom:8}}>
-              {PRESETS.map(p => (
-                <button key={p} className={`preset-btn ${target === p ? "active" : ""}`} onClick={() => setTarget(p)}>x{p}</button>
-              ))}
-            </div>
-            <div className="input-wrap" style={{marginBottom:0}}>
-              <input className="input" type="number" step="0.01" value={target}
-                onChange={e => setTarget(Math.max(1.01, Math.min(100, parseFloat(e.target.value) || 1.01)))} />
-            </div>
+      {phase==="idle" && <>
+        <BetInput value={bet} onChange={setBet} balance={balance} />
+        <div className="card">
+          <div className="card-title">Забрать на</div>
+          <div className="btn-grid-3" style={{marginBottom:8}}>
+            {PRESETS.map(p => <button key={p} className={`preset ${target===p?"on":""}`}
+              onClick={()=>{audio.click();setTarget(p);}}>x{p}</button>)}
           </div>
-          <button className="btn btn-gold" onClick={startGame} disabled={bet < 50 || bet > balance}>
-            🚀 ЗАПУСТИТЬ
-          </button>
-        </>
-      )}
-
+          <input className="input" type="number" step="0.1" value={target}
+            onChange={e=>setTarget(Math.max(1.01,Math.min(100,+e.target.value||1.01)))} />
+        </div>
+        <button className="btn btn-gold" onClick={start} disabled={bet<50||bet>balance}>
+          🚀 ЗАПУСТИТЬ
+        </button>
+      </>}
       {result && (
-        <div className={`result-box ${result.win > 0 ? "result-win" : "result-lose"}`}>
-          <div className="result-amount">{result.win > 0 ? `+${result.win.toLocaleString()}` : `${result.profit.toLocaleString()}`} ★</div>
-          <div className="result-label">{result.win > 0 ? "ВЫИГРЫШ" : "ПРОИГРЫШ"}</div>
+        <div className={`result ${result.ok?"result-win":"result-lose"}`}>
+          <div className="result-big">{result.ok ? `+${result.win.toLocaleString()}` : result.profit.toLocaleString()} ★</div>
+          <div className="result-sub">{result.ok ? `ЗАБРАЛИ НА x${target}` : `УПАЛ НА x${crashAt}`}</div>
         </div>
       )}
     </div>
@@ -616,80 +765,72 @@ function CrashGame({ balance, onBalanceChange }) {
 }
 
 // ===== SLOTS =====
-const SYMBOLS = ["🍋","🍊","🍇","🔔","💎","7️⃣","🎰"];
-const WEIGHTS  = [30,25,20,12,8,4,1];
-const PAYOUTS  = {"🍋":2,"🍊":3,"🍇":5,"🔔":10,"💎":25,"7️⃣":50,"🎰":200};
+const SYMS = ["🍋","🍊","🍇","🔔","💎","7️⃣","🎰"];
+const WGTS = [30,25,20,12,8,4,1];
+const PAYS = {"🍋":2,"🍊":3,"🍇":5,"🔔":10,"💎":25,"7️⃣":50,"🎰":200};
+function wRand(){ let s=WGTS.reduce((a,b)=>a+b),r=Math.random()*s; for(let i=0;i<SYMS.length;i++){r-=WGTS[i];if(r<=0)return SYMS[i];} return SYMS[0]; }
 
-function weightedRandom() {
-  const total = WEIGHTS.reduce((a,b) => a+b, 0);
-  let r = Math.random() * total;
-  for (let i = 0; i < SYMBOLS.length; i++) {
-    r -= WEIGHTS[i];
-    if (r <= 0) return SYMBOLS[i];
-  }
-  return SYMBOLS[0];
-}
-
-function SlotsGame({ balance, onBalanceChange }) {
+function SlotsGame({ balance, setBalance }) {
   const [bet, setBet] = useState(100);
-  const [reels, setReels] = useState(["🎰","🎰","🎰"]);
-  const [spinning, setSpinning] = useState([false,false,false]);
-  const [result, setResult] = useState(null);
-  const [playing, setPlaying] = useState(false);
+  const [reels, setReels] = useState(["💎","💎","💎"]);
+  const [spin, setSpin] = useState([false,false,false]);
+  const [win, setWin] = useState(null);
+  const [busy, setBusy] = useState(false);
 
-  function spin() {
-    if (bet < 50 || bet > balance || playing) return;
-    setPlaying(true);
-    setResult(null);
-    onBalanceChange(b => b - bet);
-
-    const final = [weightedRandom(), weightedRandom(), weightedRandom()];
-    setSpinning([true,true,true]);
-
+  function go() {
+    if (bet<50||bet>balance||busy) return;
+    audio.init(); setBusy(true); setWin(null);
+    setBalance(b => b-bet);
+    const final = [wRand(),wRand(),wRand()];
+    setSpin([true,true,true]);
     [0,1,2].forEach(i => {
       setTimeout(() => {
-        setSpinning(s => { const n=[...s]; n[i]=false; return n; });
-        setReels(r => { const n=[...r]; n[i]=final[i]; return n; });
-        if (i === 2) {
-          const [a,b2,c] = final;
-          let win = 0, text = "";
-          if (a===b2 && b2===c) { win = Math.floor(bet * PAYOUTS[a]); text = `Три ${a}! x${PAYOUTS[a]}`; }
-          else if (a===b2||b2===c||a===c) { win = Math.floor(bet * 0.5); text = "Два совпадения! x0.5"; }
-          else text = "Нет совпадений";
-          if (win > 0) onBalanceChange(b => b + win);
-          setResult({ win, profit: win - bet, text });
-          setPlaying(false);
-          apiCall("play", { game: "slots", bet, reels: final, win });
+        audio.spin();
+        setSpin(s=>{const n=[...s];n[i]=false;return n;});
+        setReels(r=>{const n=[...r];n[i]=final[i];return n;});
+        if (i===2) {
+          const [a,b2,c]=final;
+          let w=0,txt="";
+          if(a===b2&&b2===c){w=Math.floor(bet*PAYS[a]);txt=`Три ${a}! ×${PAYS[a]}`;}
+          else if(a===b2||b2===c||a===c){w=Math.floor(bet*0.5);txt="Два совпадения ×0.5";}
+          else txt="Нет совпадений";
+          if(w>0){setBalance(b=>b+w);audio.win();if(w>bet*5)audio.jackpot();burstParticles(window.innerWidth/2,250,true);}
+          else audio.lose();
+          setWin({w,profit:w-bet,txt}); setBusy(false);
+          api("play",{game:"slots",bet,win:w});
         }
-      }, 500 + i * 300);
+      }, 400+i*350);
     });
   }
 
   return (
     <div>
-      <div className="slots-display">
-        {reels.map((sym, i) => (
-          <div key={i} className={`slot-reel ${spinning[i] ? "spinning" : ""} ${result?.win > 0 && !spinning[i] ? "win" : ""}`}>
-            {spinning[i] ? "🎲" : sym}
-          </div>
-        ))}
+      <div className="slot-machine">
+        <div className="reels-row">
+          {reels.map((s,i) => (
+            <div key={i} className={`reel-wrap ${spin[i]?"spinning":""} ${win?.w>0&&!spin[i]&&reels.filter((x,j)=>j!==i?reels[i]===x:false).length>0?"win-reel":""}`}>
+              <div className="reel-symbol">{spin[i] ? SYMS[Math.floor(Math.random()*SYMS.length)] : s}</div>
+            </div>
+          ))}
+        </div>
+        <div className="slot-line" />
       </div>
       <BetInput value={bet} onChange={setBet} balance={balance} />
-      <button className="btn btn-gold" onClick={spin} disabled={playing || bet < 50 || bet > balance}>
-        {playing ? "⏳ КРУТИМ..." : "🎰 КРУТИТЬ"}
+      <button className="btn btn-gold" onClick={go} disabled={busy||bet<50||bet>balance}>
+        {busy ? "⏳ КРУТИТСЯ..." : "🎰 КРУТИТЬ"}
       </button>
-      {result && (
-        <div className={`result-box ${result.win > 0 ? "result-win" : "result-lose"}`}>
-          <div className="result-amount">{result.win > 0 ? `+${result.win.toLocaleString()}` : `${result.profit.toLocaleString()}`} ★</div>
-          <div className="result-label">{result.text}</div>
+      {win && (
+        <div className={`result ${win.w>0?"result-win":"result-lose"}`}>
+          <div className="result-big">{win.w>0?`+${win.w.toLocaleString()}`:win.profit.toLocaleString()} ★</div>
+          <div className="result-sub">{win.txt}</div>
         </div>
       )}
       <div className="card" style={{marginTop:12}}>
-        <div className="card-title">Таблица выплат</div>
-        {Object.entries(PAYOUTS).map(([sym,mult]) => (
-          <div key={sym} className="stat-row">
-            <span className="stat-label">{sym} {sym} {sym}</span>
-            <span className="stat-value">x{mult}</span>
+        <div className="card-title">Выплаты</div>
+        {Object.entries(PAYS).map(([s,m])=>(
+          <div key={s} className="stat-line">
+            <span className="stat-k">{s} {s} {s}</span>
+            <span className="stat-v" style={{color:"var(--gold2)"}}>×{m}</span>
           </div>
         ))}
       </div>
@@ -698,221 +839,190 @@ function SlotsGame({ balance, onBalanceChange }) {
 }
 
 // ===== BLACKJACK =====
-const SUITS2 = ["♠","♥","♦","♣"];
-const VALS = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
-function newDeck() { return VALS.flatMap(v => SUITS2.map(s => v+s)).sort(() => Math.random()-0.5); }
-function cardVal(c) {
-  const v = c.slice(0,-1);
-  if (["J","Q","K"].includes(v)) return 10;
-  if (v==="A") return 11;
-  return parseInt(v);
-}
-function handVal(hand) {
-  let t = hand.reduce((a,c) => a+cardVal(c), 0);
-  let aces = hand.filter(c => c.startsWith("A")).length;
-  while (t > 21 && aces) { t -= 10; aces--; }
-  return t;
-}
-function isRed(c) { return c.endsWith("♥") || c.endsWith("♦"); }
+const SUITS3=["♠","♥","♦","♣"],VALS2=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+function mkDeck(){return VALS2.flatMap(v=>SUITS3.map(s=>v+s)).sort(()=>Math.random()-0.5);}
+function cVal(c){const v=c.slice(0,-1);if("JQK".includes(v))return 10;if(v==="A")return 11;return+v;}
+function hVal(h){let t=h.reduce((a,c)=>a+cVal(c),0),ac=h.filter(c=>c.startsWith("A")).length;while(t>21&&ac){t-=10;ac--;}return t;}
+function isRed2(c){return c.endsWith("♥")||c.endsWith("♦");}
 
-function BJCard({ card, hidden }) {
-  if (hidden) return <div className="bj-card back">🂠</div>;
-  return <div className={`bj-card ${isRed(card) ? "red" : ""}`}>{card}</div>;
+function Card({c,back}){
+  if(back) return <div className="playing-card back-card">🂠</div>;
+  const v=c.slice(0,-1),s=c.slice(-1);
+  return (
+    <div className={`playing-card ${isRed2(c)?"red-card":"white"}`}>
+      <div>{v}</div><div style={{fontSize:11}}>{s}</div>
+      <span className="card-suit">{s}</span>
+    </div>
+  );
 }
 
-function BlackjackGame({ balance, onBalanceChange }) {
+function BlackjackGame({ balance, setBalance }) {
   const [bet, setBet] = useState(100);
-  const [state, setState] = useState("betting"); // betting | playing | done
+  const [phase, setPhase] = useState("bet");
   const [deck, setDeck] = useState([]);
   const [player, setPlayer] = useState([]);
   const [dealer, setDealer] = useState([]);
   const [result, setResult] = useState(null);
 
   function deal() {
-    if (bet < 50 || bet > balance) return;
-    const d = newDeck();
-    const p = [d.pop(), d.pop()];
-    const dl = [d.pop(), d.pop()];
-    setDeck(d); setPlayer(p); setDealer(dl); setResult(null);
-    onBalanceChange(b => b - bet);
-    setState("playing");
-    if (handVal(p) === 21) { setTimeout(() => stand(p, dl, d, bet), 300); }
+    if(bet<50||bet>balance) return;
+    audio.init();
+    const d=mkDeck();
+    const p=[d.pop(),d.pop()], dl=[d.pop(),d.pop()];
+    setDeck(d);setPlayer(p);setDealer(dl);setResult(null);
+    setBalance(b=>b-bet);
+    audio.deal(); setTimeout(()=>audio.deal(),150); setTimeout(()=>audio.deal(),300);
+    setPhase("play");
+    if(hVal(p)===21) setTimeout(()=>finish(p,dl,d,bet),400);
   }
 
-  function hit() {
-    const d = [...deck];
-    const p = [...player, d.pop()];
-    setDeck(d); setPlayer(p);
-    const v = handVal(p);
-    if (v > 21) { finish(p, dealer, bet, "bust"); }
-    else if (v === 21) { setTimeout(() => stand(p, dealer, d, bet), 300); }
+  function hit(){
+    const d=[...deck],p=[...player,d.pop()];
+    audio.deal(); setDeck(d);setPlayer(p);
+    const v=hVal(p);
+    if(v>21) finish(p,dealer,deck,bet,"bust");
+    else if(v===21) setTimeout(()=>finish(p,dealer,d,bet),300);
   }
 
-  function stand(p = player, dl = dealer, d = deck, b = bet) {
-    const finalDl = [...dl];
-    const finalD = [...d];
-    while (handVal(finalDl) < 17) finalDl.push(finalD.pop());
-    setDealer(finalDl);
-    finish(p, finalDl, b, "stand");
+  function stand(p2=player,dl2=dealer,d2=deck,b2=bet){
+    const fd=[...dl2],fd2=[...d2];
+    while(hVal(fd)<17) fd.push(fd2.pop());
+    setDealer(fd);
+    finish(p2,fd,fd2,b2,"stand");
   }
 
-  function double() {
-    if (balance < bet) return;
-    onBalanceChange(b => b - bet);
-    const nb = bet * 2;
-    const d = [...deck];
-    const p = [...player, d.pop()];
-    setDeck(d); setPlayer(p);
-    const v = handVal(p);
-    if (v > 21) finish(p, dealer, nb, "bust");
-    else stand(p, dealer, d, nb);
+  function dbl(){
+    if(balance<bet) return;
+    setBalance(b=>b-bet);
+    const nb=bet*2,d=[...deck],p=[...player,d.pop()];
+    audio.deal(); setDeck(d);setPlayer(p);
+    if(hVal(p)>21) finish(p,dealer,d,nb,"bust");
+    else stand(p,dealer,d,nb);
   }
 
-  function finish(p, dl, b, reason) {
-    const pv = handVal(p);
-    const dv = handVal(dl);
-    let win = 0, text = "";
-    if (reason === "bust") { text = "💥 Перебор!"; }
-    else if (pv === 21 && p.length === 2) { win = Math.floor(b * 2.5); text = "🎉 БЛЭКДЖЕК! x2.5"; }
-    else if (dv > 21 || pv > dv) { win = b * 2; text = "🎉 Победа!"; }
-    else if (pv === dv) { win = b; text = "🤝 Ничья"; }
-    else { text = "😔 Дилер победил"; }
-    if (win > 0) onBalanceChange(b2 => b2 + win);
-    setResult({ win, profit: win - b, text });
-    setState("done");
-    apiCall("play", { game: "blackjack", bet: b, player_val: pv, dealer_val: dv, win });
+  function finish(p,dl,d,b,_){
+    const pv=hVal(p),dv=hVal(dl);
+    let win=0,txt="",type="lose";
+    if(pv>21){txt="💥 Перебор!";}
+    else if(pv===21&&p.length===2){win=Math.floor(b*2.5);txt="🎉 БЛЭКДЖЕК! ×2.5";type="win";}
+    else if(dv>21||pv>dv){win=b*2;txt="🎉 Победа!";type="win";}
+    else if(pv===dv){win=b;txt="🤝 Ничья";type="tie";}
+    else{txt="😔 Дилер победил";}
+    if(win>0){setBalance(b2=>b2+win);audio.win();if(win>b*2)audio.jackpot();burstParticles(window.innerWidth/2,250,win>b);}
+    else audio.lose();
+    setResult({win,profit:win-b,txt,type});
+    setPhase("done");
+    api("play",{game:"blackjack",bet:b,win});
   }
 
   return (
     <div>
-      <div className="bj-table">
-        {state !== "betting" && (
-          <>
-            <div className="bj-section-label">Дилер {state === "done" ? `(${handVal(dealer)})` : ""}</div>
-            <div className="bj-hand">
-              {dealer.map((c, i) => <BJCard key={i} card={c} hidden={state === "playing" && i === 1} />)}
-            </div>
-            <hr className="bj-divider" />
-            <div className="bj-section-label">Вы ({handVal(player)})</div>
-            <div className="bj-hand">
-              {player.map((c, i) => <BJCard key={i} card={c} />)}
-            </div>
-          </>
-        )}
-        {state === "betting" && (
-          <div style={{textAlign:"center",padding:"20px 0",color:"var(--muted)"}}>
-            <div style={{fontSize:40,marginBottom:8}}>🃏</div>
-            <div style={{fontSize:13,letterSpacing:2}}>УКАЖИТЕ СТАВКУ И НАЧНИТЕ ИГРУ</div>
+      <div className="felt">
+        {phase!=="bet" && <>
+          <div className="hand-label">Дилер {phase==="done"?`(${hVal(dealer)})`:""}</div>
+          <div className="hand">{dealer.map((c,i)=><Card key={i} c={c} back={phase==="play"&&i===1}/>)}</div>
+          <hr className="bj-divider"/>
+          <div className="hand-label">Вы ({hVal(player)})</div>
+          <div className="hand">{player.map((c,i)=><Card key={i} c={c}/>)}</div>
+        </>}
+        {phase==="bet" && (
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:8,paddingTop:20}}>
+            <div style={{fontSize:48,animation:"float 2s ease infinite"}}>🃏</div>
+            <div style={{fontSize:10,letterSpacing:3,color:"var(--muted)",textTransform:"uppercase"}}>Укажите ставку</div>
           </div>
         )}
       </div>
-
-      {(state === "betting" || state === "done") && (
-        <BetInput value={bet} onChange={setBet} balance={balance} />
-      )}
-
-      {state === "betting" && (
-        <button className="btn btn-gold" onClick={deal} disabled={bet < 50 || bet > balance}>
-          🃏 РАЗДАТЬ КАРТЫ
-        </button>
-      )}
-
-      {state === "playing" && (
-        <div className="btn-grid" style={{gap:8}}>
-          <button className="btn btn-green btn-sm" style={{width:"100%"}} onClick={hit}>👊 ЕЩЁ</button>
-          <button className="btn btn-outline btn-sm" style={{width:"100%"}} onClick={() => stand()}>✋ СТОП</button>
-          {player.length === 2 && balance >= bet && (
-            <button className="btn btn-gold" style={{gridColumn:"span 2"}} onClick={double}>💰 УДВОИТЬ</button>
-          )}
+      {(phase==="bet"||phase==="done") && <BetInput value={bet} onChange={setBet} balance={balance}/>}
+      {phase==="bet" && <button className="btn btn-gold" onClick={deal} disabled={bet<50||bet>balance}>🃏 РАЗДАТЬ</button>}
+      {phase==="play" && (
+        <div className="btn-grid-2" style={{gap:8}}>
+          <button className="btn btn-emerald" onClick={hit}>👊 ЕЩЁ</button>
+          <button className="btn btn-ghost" onClick={()=>stand()}>✋ СТОП</button>
+          {player.length===2&&balance>=bet&&<button className="btn btn-gold" style={{gridColumn:"span 2"}} onClick={dbl}>💰 УДВОИТЬ</button>}
         </div>
       )}
-
-      {state === "done" && result && (
-        <>
-          <div className={`result-box ${result.win > 0 ? "result-win" : "result-lose"}`}>
-            <div className="result-amount">{result.win > 0 ? `+${result.win.toLocaleString()}` : `${result.profit.toLocaleString()}`} ★</div>
-            <div className="result-label">{result.text}</div>
-          </div>
-          <button className="btn btn-gold" style={{marginTop:8}} onClick={() => setState("betting")}>🔄 ЕЩЁE РАЗ</button>
-        </>
-      )}
+      {phase==="done" && result && <>
+        <div className={`result result-${result.type}`}>
+          <div className="result-big">{result.win>0?`+${result.win.toLocaleString()}`:result.profit.toLocaleString()} ★</div>
+          <div className="result-sub">{result.txt}</div>
+        </div>
+        <button className="btn btn-gold" style={{marginTop:8}} onClick={()=>setPhase("bet")}>🔄 СНОВА</button>
+      </>}
     </div>
   );
 }
 
 // ===== ROULETTE =====
-const RED_NUMS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
-const BET_TYPES = [
-  { id:"red",   label:"🔴 КРАСНОЕ",  mult:2 },
-  { id:"black", label:"⚫ ЧЁРНОЕ",   mult:2 },
-  { id:"even",  label:"ЧЁТНОЕ",      mult:2 },
-  { id:"odd",   label:"НЕЧЁТНОЕ",    mult:2 },
-  { id:"1-18",  label:"1–18",        mult:2 },
-  { id:"19-36", label:"19–36",       mult:2 },
+const R_NUMS=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+const BET_T=[
+  {id:"red",l:"🔴 Красное",m:2},{id:"black",l:"⚫ Чёрное",m:2},
+  {id:"even",l:"ЧЁТНОЕ",m:2},{id:"odd",l:"НЕЧЁТНОЕ",m:2},
+  {id:"low",l:"1 – 18",m:2},{id:"high",l:"19 – 36",m:2},
 ];
 
-function RouletteGame({ balance, onBalanceChange }) {
+function RouletteGame({ balance, setBalance }) {
   const [bet, setBet] = useState(100);
-  const [betType, setBetType] = useState("red");
-  const [spinning, setSpinning] = useState(false);
+  const [type, setType] = useState("red");
+  const [spin, setSpin] = useState(false);
   const [result, setResult] = useState(null);
-  const [rotation, setRotation] = useState(0);
-  const [lastNum, setLastNum] = useState(null);
+  const [rot, setRot] = useState(0);
+  const [last, setLast] = useState(null);
 
-  function spin() {
-    if (bet < 50 || bet > balance || spinning) return;
-    setSpinning(true);
-    setResult(null);
-    onBalanceChange(b => b - bet);
-
-    const num = Math.floor(Math.random() * 37);
-    setLastNum(num);
-    setRotation(r => r + 1440 + Math.random() * 360);
-
-    setTimeout(() => {
-      const color = num === 0 ? "green" : RED_NUMS.has(num) ? "red" : "black";
-      let win = 0;
-      if (betType==="red" && color==="red") win = bet*2;
-      else if (betType==="black" && color==="black") win = bet*2;
-      else if (betType==="even" && num!==0 && num%2===0) win = bet*2;
-      else if (betType==="odd" && num%2===1) win = bet*2;
-      else if (betType==="1-18" && num>=1 && num<=18) win = bet*2;
-      else if (betType==="19-36" && num>=19 && num<=36) win = bet*2;
-      if (win > 0) onBalanceChange(b => b + win);
-      setResult({ win, profit: win-bet, num, color });
-      setSpinning(false);
-      apiCall("play", { game: "roulette", bet, bet_type: betType, result: num, win });
-    }, 2200);
+  function go() {
+    if(bet<50||bet>balance||spin) return;
+    audio.init(); setSpin(true); setResult(null);
+    setBalance(b=>b-bet);
+    const num=Math.floor(Math.random()*37);
+    setLast(num);
+    setRot(r=>r+1440+Math.random()*360);
+    setTimeout(()=>{
+      const col=num===0?"green":R_NUMS.has(num)?"red":"black";
+      let win=0;
+      if(type==="red"&&col==="red") win=bet*2;
+      else if(type==="black"&&col==="black") win=bet*2;
+      else if(type==="even"&&num!==0&&num%2===0) win=bet*2;
+      else if(type==="odd"&&num%2===1) win=bet*2;
+      else if(type==="low"&&num>=1&&num<=18) win=bet*2;
+      else if(type==="high"&&num>=19&&num<=36) win=bet*2;
+      if(win>0){setBalance(b=>b+win);audio.win();burstParticles(window.innerWidth/2,200,true);}
+      else audio.lose();
+      setResult({win,profit:win-bet,num,col});
+      setSpin(false);
+      api("play",{game:"roulette",bet,win});
+    }, 2600);
   }
 
   return (
     <div>
-      <div className="roulette-wheel" style={{transform:`rotate(${rotation}deg)`}}>
-        <div className="roulette-center">{lastNum ?? "?"}</div>
+      <div className="wheel-stage">
+        <div style={{position:"relative"}}>
+          <div className="wheel-pointer"/>
+          <div className="wheel-outer" style={{transform:`rotate(${rot}deg)`}}>
+            <div className="wheel-inner">{last ?? "?"}</div>
+          </div>
+        </div>
       </div>
-
-      <div className="roulette-bet-types">
-        {BET_TYPES.map(t => (
-          <button key={t.id} className={`roulette-type-btn ${betType===t.id?"selected":""}`} onClick={() => setBetType(t.id)}>
-            {t.label} <span style={{color:"var(--muted)",fontSize:11}}>x{t.mult}</span>
+      <div className="bet-types">
+        {BET_T.map(t=>(
+          <button key={t.id} className={`bet-type-btn ${type===t.id?"on":""}`}
+            onClick={()=>{audio.click();setType(t.id);}}>
+            {t.l} <span style={{color:"var(--muted)",fontSize:10}}>×{t.m}</span>
           </button>
         ))}
       </div>
-
-      <BetInput value={bet} onChange={setBet} balance={balance} />
-      <button className="btn btn-gold" onClick={spin} disabled={spinning || bet < 50 || bet > balance}>
-        {spinning ? "⏳ КРУТИТСЯ..." : "🎡 КРУТИТЬ"}
+      <BetInput value={bet} onChange={setBet} balance={balance}/>
+      <button className="btn btn-gold" onClick={go} disabled={spin||bet<50||bet>balance}>
+        {spin?"⏳ КРУТИТСЯ...":"🎡 КРУТИТЬ"}
       </button>
-
       {result && (
-        <div className={`result-box ${result.win>0?"result-win":"result-lose"}`}>
-          <div style={{fontSize:20,marginBottom:4}}>
-            Выпало: <b style={{color: result.color==="red"?"var(--red)":result.color==="green"?"var(--green)":"var(--text)"}}>
-              {result.num} {result.color==="red"?"🔴":result.color==="green"?"🟢":"⚫"}
+        <div className={`result ${result.win>0?"result-win":"result-lose"}`}>
+          <div style={{fontSize:18,marginBottom:6}}>
+            Выпало: <b style={{color:result.col==="red"?"var(--ruby)":result.col==="green"?"var(--emerald2)":"var(--text)"}}>
+              {result.num} {result.col==="red"?"🔴":result.col==="green"?"🟢":"⚫"}
             </b>
           </div>
-          <div className="result-amount">{result.win>0?`+${result.win.toLocaleString()}`:`${result.profit.toLocaleString()}`} ★</div>
-          <div className="result-label">{result.win>0?"ВЫИГРЫШ":"ПРОИГРЫШ"}</div>
+          <div className="result-big">{result.win>0?`+${result.win.toLocaleString()}`:result.profit.toLocaleString()} ★</div>
+          <div className="result-sub">{result.win>0?"ВЫИГРЫШ":"ПРОИГРЫШ"}</div>
         </div>
       )}
     </div>
@@ -920,107 +1030,83 @@ function RouletteGame({ balance, onBalanceChange }) {
 }
 
 // ===== KENO =====
-const KENO_PAYOUTS = {1:{1:3},2:{2:12},3:{2:1,3:42},4:{2:1,3:4,4:120},5:{3:1,4:8,5:800},
+const KP={1:{1:3},2:{2:12},3:{2:1,3:42},4:{2:1,3:4,4:120},5:{3:1,4:8,5:800},
   6:{3:1,4:4,5:88,6:1500},7:{4:1,5:18,6:300,7:4500},8:{5:9,6:90,7:1500,8:10000},
   9:{4:1,5:6,6:44,7:300,8:4000,9:25000},10:{5:2,6:20,7:142,8:1000,9:4500,10:100000}};
 
-function KenoGame({ balance, onBalanceChange }) {
+function KenoGame({ balance, setBalance }) {
   const [bet, setBet] = useState(100);
-  const [selected, setSelected] = useState(new Set());
+  const [sel, setSel] = useState(new Set());
   const [drawn, setDrawn] = useState(new Set());
   const [hits, setHits] = useState(new Set());
   const [result, setResult] = useState(null);
-  const [playing, setPlaying] = useState(false);
-  const maxSelect = 10;
+  const [busy, setBusy] = useState(false);
 
-  function toggleNum(n) {
-    if (playing) return;
-    setSelected(s => {
-      const ns = new Set(s);
-      if (ns.has(n)) ns.delete(n);
-      else if (ns.size < maxSelect) ns.add(n);
-      return ns;
-    });
-    setDrawn(new Set()); setHits(new Set()); setResult(null);
+  function tog(n){
+    if(busy) return;
+    audio.click();
+    setSel(s=>{const ns=new Set(s);ns.has(n)?ns.delete(n):ns.size<10&&ns.add(n);return ns;});
+    setDrawn(new Set());setHits(new Set());setResult(null);
+  }
+  function auto(){
+    const ns=new Set();
+    while(ns.size<10) ns.add(Math.floor(Math.random()*80)+1);
+    setSel(ns);setDrawn(new Set());setHits(new Set());setResult(null);
   }
 
-  function play() {
-    if (selected.size === 0 || bet < 50 || bet > balance || playing) return;
-    setPlaying(true);
-    setResult(null);
-    onBalanceChange(b => b - bet);
-
-    const drawnNums = new Set();
-    while (drawnNums.size < 20) drawnNums.add(Math.floor(Math.random()*80)+1);
-
-    const hitNums = new Set([...selected].filter(n => drawnNums.has(n)));
-    const spot = selected.size;
-    const h = hitNums.size;
-    const mult = KENO_PAYOUTS[spot]?.[h] || 0;
-    const win = Math.floor(bet * mult);
-    if (win > 0) onBalanceChange(b => b + win);
-
-    // Анимируем появление чисел
-    let i = 0;
-    const arr = [...drawnNums];
-    const interval = setInterval(() => {
-      setDrawn(d => new Set([...d, arr[i]]));
-      if (hitNums.has(arr[i])) setHits(h2 => new Set([...h2, arr[i]]));
+  function play(){
+    if(sel.size===0||bet<50||bet>balance||busy) return;
+    audio.init(); setBusy(true); setResult(null);
+    setBalance(b=>b-bet);
+    const dr=new Set();
+    while(dr.size<20) dr.add(Math.floor(Math.random()*80)+1);
+    const ht=new Set([...sel].filter(n=>dr.has(n)));
+    const m=KP[sel.size]?.[ht.size]||0;
+    const win=Math.floor(bet*m);
+    if(win>0){setBalance(b=>b+win);setTimeout(()=>{audio.win();if(win>bet*10)audio.jackpot();},500);}
+    else setTimeout(()=>audio.lose(),1000);
+    const arr=[...dr];
+    let i=0;
+    const iv=setInterval(()=>{
+      audio.tick();
+      setDrawn(d=>new Set([...d,arr[i]]));
+      if(ht.has(arr[i])) setHits(h=>new Set([...h,arr[i]]));
       i++;
-      if (i >= arr.length) {
-        clearInterval(interval);
-        setResult({ win, profit: win-bet, hits: h, spot, mult });
-        setPlaying(false);
-        apiCall("play", { game: "keno", bet, spot, hits: h, win });
+      if(i>=arr.length){
+        clearInterval(iv);
+        setResult({win,profit:win-bet,hits:ht.size,spot:sel.size,m});
+        setBusy(false);
+        if(win>0) burstParticles(window.innerWidth/2,300,true);
+        api("play",{game:"keno",bet,spot:sel.size,hits:ht.size,win});
       }
-    }, 80);
+    }, 60);
   }
 
   return (
     <div>
-      <div className="keno-info">
-        <span>Выбрано: <span>{selected.size}/{maxSelect}</span></span>
-        <span>Выпало: <span>{drawn.size}/20</span></span>
-        <span>Совпало: <span style={{color:"var(--gold)"}}>{hits.size}</span></span>
+      <div className="keno-stats">
+        <div className="keno-stat"><div className="keno-stat-v">{sel.size}<span style={{color:"var(--muted)",fontSize:12}}>/10</span></div><div className="keno-stat-l">Выбрано</div></div>
+        <div className="keno-stat"><div className="keno-stat-v">{drawn.size}<span style={{color:"var(--muted)",fontSize:12}}>/20</span></div><div className="keno-stat-l">Выпало</div></div>
+        <div className="keno-stat"><div className="keno-stat-v" style={{color:"var(--emerald2)"}}>{hits.size}</div><div className="keno-stat-l">Совпало</div></div>
       </div>
-
       <div className="keno-grid">
-        {Array.from({length:80},(_,i)=>i+1).map(n => {
-          const isSel = selected.has(n);
-          const isHit = hits.has(n);
-          const isDrn = drawn.has(n) && !isHit;
-          return (
-            <div key={n} className={`keno-num ${isSel&&!isDrn&&!isHit?"selected":""} ${isDrn?"drawn":""} ${isHit?"hit":""}`}
-              onClick={() => toggleNum(n)}>
-              {n}
-            </div>
-          );
+        {Array.from({length:80},(_,i)=>i+1).map(n=>{
+          const isSel=sel.has(n),isHit=hits.has(n),isDrw=drawn.has(n)&&!isHit;
+          return <div key={n} className={`kn ${isSel&&!isDrw&&!isHit?"sel":""} ${isDrw?"drw":""} ${isHit?"hit":""}`} onClick={()=>tog(n)}>{n}</div>;
         })}
       </div>
-
-      <BetInput value={bet} onChange={setBet} balance={balance} />
-
-      <div className="btn-grid" style={{marginBottom:8}}>
-        <button className="btn btn-outline" onClick={() => { setSelected(new Set()); setDrawn(new Set()); setHits(new Set()); setResult(null); }}>
-          ОЧИСТИТЬ
-        </button>
-        <button className="btn btn-outline" onClick={() => {
-          const nums = new Set();
-          while (nums.size < maxSelect) nums.add(Math.floor(Math.random()*80)+1);
-          setSelected(nums); setDrawn(new Set()); setHits(new Set()); setResult(null);
-        }}>
-          АВТО
-        </button>
+      <BetInput value={bet} onChange={setBet} balance={balance}/>
+      <div className="btn-grid-2" style={{marginBottom:8}}>
+        <button className="btn btn-ghost" onClick={()=>{setSel(new Set());setDrawn(new Set());setHits(new Set());setResult(null);}}>ОЧИСТИТЬ</button>
+        <button className="btn btn-ghost" onClick={auto}>АВТО</button>
       </div>
-
-      <button className="btn btn-gold" onClick={play} disabled={playing || selected.size === 0 || bet < 50 || bet > balance}>
-        {playing ? "⏳ ИДЁТ РОЗЫГРЫШ..." : "🎰 ИГРАТЬ"}
+      <button className="btn btn-gold" onClick={play} disabled={busy||sel.size===0||bet<50||bet>balance}>
+        {busy?"⏳ РОЗЫГРЫШ...":"🎰 ИГРАТЬ"}
       </button>
-
       {result && (
-        <div className={`result-box ${result.win>0?"result-win":"result-lose"}`} style={{marginTop:12}}>
-          <div className="result-amount">{result.win>0?`+${result.win.toLocaleString()}`:`${result.profit.toLocaleString()}`} ★</div>
-          <div className="result-label">{result.hits} из {result.spot} • {result.mult>0?`x${result.mult}`:"Нет выплат"}</div>
+        <div className={`result ${result.win>0?"result-win":"result-lose"}`}>
+          <div className="result-big">{result.win>0?`+${result.win.toLocaleString()}`:result.profit.toLocaleString()} ★</div>
+          <div className="result-sub">{result.hits}/{result.spot} СОВПАДЕНИЙ {result.m>0?`× ${result.m}`:""}</div>
         </div>
       )}
     </div>
@@ -1029,67 +1115,92 @@ function KenoGame({ balance, onBalanceChange }) {
 
 // ===== PROFILE =====
 function Profile({ balance }) {
-  const [data, setData] = useState(null);
-  useEffect(() => {
-    apiCall("profile").then(r => r.ok && setData(r.data));
-  }, []);
-
-  const mockData = { username: user?.first_name || "Игрок", vip: 1, total_bet: 15000, total_win: 12000, wins: 45, games: 120 };
-  const d = data || mockData;
-  const winrate = d.games > 0 ? ((d.wins/d.games)*100).toFixed(1) : 0;
+  const mock = {
+    username: tg?.initDataUnsafe?.user?.first_name || "Игрок",
+    vip:1, total_bet:15000, total_win:12000, wins:45, games:120
+  };
+  const d = mock;
   const profit = d.total_win - d.total_bet;
-
+  const wr = d.games > 0 ? ((d.wins/d.games)*100).toFixed(1) : 0;
   return (
     <div>
-      <div className="card" style={{textAlign:"center",marginBottom:16}}>
-        <div style={{fontSize:48,marginBottom:8}}>👑</div>
-        <div style={{fontSize:20,fontWeight:700,marginBottom:6}}>{d.username}</div>
-        <div><span className="vip-badge">★ VIP-{d.vip}</span></div>
-        <div style={{fontSize:28,fontFamily:"'Orbitron',monospace",fontWeight:900,color:"var(--gold)",marginTop:12}}>
+      <div className="card" style={{textAlign:"center",paddingTop:20,paddingBottom:20}}>
+        <div className="avatar-ring">👑</div>
+        <div style={{fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,marginBottom:8}}>{d.username}</div>
+        <div className="vip-crown">★ VIP {d.vip}</div>
+        <div style={{fontFamily:"'Cinzel',serif",fontSize:30,fontWeight:900,color:"var(--gold2)",marginTop:14,letterSpacing:2}}>
           {balance.toLocaleString()} ★
         </div>
       </div>
       <div className="card">
         <div className="card-title">Статистика</div>
-        <div className="stat-row"><span className="stat-label">Всего ставок</span><span className="stat-value">{d.total_bet.toLocaleString()} ★</span></div>
-        <div className="stat-row"><span className="stat-label">Всего выиграно</span><span className="stat-value">{d.total_win.toLocaleString()} ★</span></div>
-        <div className="stat-row"><span className="stat-label">Профит</span><span className="stat-value" style={{color:profit>=0?"var(--green)":"var(--red)"}}>{profit>=0?"+":""}{profit.toLocaleString()} ★</span></div>
-        <div className="stat-row"><span className="stat-label">Игр сыграно</span><span className="stat-value">{d.games}</span></div>
-        <div className="stat-row"><span className="stat-label">Побед</span><span className="stat-value">{d.wins}</span></div>
-        <div className="stat-row"><span className="stat-label">Винрейт</span><span className="stat-value" style={{color:"var(--gold)"}}>{winrate}%</span></div>
+        {[
+          ["Всего ставок", d.total_bet.toLocaleString()+" ★"],
+          ["Всего выиграно", d.total_win.toLocaleString()+" ★"],
+          ["Профит", (profit>=0?"+":"")+profit.toLocaleString()+" ★", profit>=0?"var(--emerald2)":"var(--ruby)"],
+          ["Игр сыграно", d.games],
+          ["Побед", d.wins],
+          ["Винрейт", wr+"%","var(--gold2)"],
+        ].map(([k,v,c])=>(
+          <div key={k} className="stat-line">
+            <span className="stat-k">{k}</span>
+            <span className="stat-v" style={{color:c||"var(--text)"}}>{v}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-// ===== MAIN APP =====
+// ===== APP =====
+const TABS = [
+  {id:"keno",label:"🎰 KENO"},
+  {id:"crash",label:"🚀 КРАШ"},
+  {id:"slots",label:"🎰 СЛОТЫ"},
+  {id:"blackjack",label:"🃏 БЛЭКДЖЕК"},
+  {id:"roulette",label:"🎡 РУЛЕТКА"},
+  {id:"profile",label:"👑 ПРОФИЛЬ"},
+];
+
 function App() {
   const [tab, setTab] = useState("keno");
   const [balance, setBalance] = useState(10000);
 
   useEffect(() => {
-    tg?.ready();
-    tg?.expand();
-    tg?.setHeaderColor("#0a0a0f");
-    apiCall("balance").then(r => r.ok && setBalance(r.balance));
+    tg?.ready(); tg?.expand();
+    tg?.setHeaderColor?.("#050508");
+    tg?.setBackgroundColor?.("#050508");
+    initBgCanvas();
+    api("balance").then(r => r.ok && setBalance(r.balance));
   }, []);
 
   const pages = {
-    keno:      <KenoGame      balance={balance} onBalanceChange={setBalance} />,
-    crash:     <CrashGame     balance={balance} onBalanceChange={setBalance} />,
-    slots:     <SlotsGame     balance={balance} onBalanceChange={setBalance} />,
-    blackjack: <BlackjackGame balance={balance} onBalanceChange={setBalance} />,
-    roulette:  <RouletteGame  balance={balance} onBalanceChange={setBalance} />,
+    keno:      <KenoGame      balance={balance} setBalance={setBalance} />,
+    crash:     <CrashGame     balance={balance} setBalance={setBalance} />,
+    slots:     <SlotsGame     balance={balance} setBalance={setBalance} />,
+    blackjack: <BlackjackGame balance={balance} setBalance={setBalance} />,
+    roulette:  <RouletteGame  balance={balance} setBalance={setBalance} />,
     profile:   <Profile balance={balance} />,
   };
 
   return (
     <div className="app">
-      <Header balance={balance} onProfile={() => setTab("profile")} />
-      <Nav active={tab} onChange={setTab} />
-      <div className="content">
-        {pages[tab]}
+      <div className="header">
+        <div className="logo">ROYAL KENO KZ</div>
+        <div className="balance-pill" onClick={() => setTab("profile")}>
+          <span className="star">★</span>
+          <span className="amount">{balance.toLocaleString()}</span>
+        </div>
       </div>
+      <div className="nav">
+        {TABS.map(t => (
+          <button key={t.id} className={`nav-item ${tab===t.id?"active":""}`}
+            onClick={() => { audio.click(); setTab(t.id); }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <div className="scroll-area">{pages[tab]}</div>
     </div>
   );
 }
