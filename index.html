@@ -138,6 +138,28 @@ body{color:var(--txt);font-family:'Montserrat',sans-serif;font-size:14px;}
 <body>
 <canvas id="bg-canvas"></canvas>
 <div id="root"></div>
+<!-- Экран ошибки (скрыт по умолчанию) -->
+<div id="err-screen" style="display:none;position:fixed;inset:0;background:#050508;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;text-align:center;flex-direction:column;gap:12px;">
+  <div style="font-size:36px">⚠️</div>
+  <div style="font-family:monospace;color:#E63950;font-size:13px" id="err-msg">Ошибка загрузки</div>
+  <button onclick="location.reload()" style="background:#D4AF37;border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer;margin-top:8px">🔄 Перезагрузить</button>
+</div>
+<script>
+window.onerror = function(msg, src, line, col, err) {
+  var s = document.getElementById('err-screen');
+  var m = document.getElementById('err-msg');
+  if(s && m) { s.style.display='flex'; m.textContent = msg + ' ('+line+':'+col+')'; }
+  console.error('Global error:', msg, src, line, col, err);
+};
+// Проверяем что React загрузился
+window.addEventListener('load', function() {
+  if(typeof React === 'undefined' || typeof ReactDOM === 'undefined' || typeof Babel === 'undefined') {
+    var s = document.getElementById('err-screen');
+    var m = document.getElementById('err-msg');
+    if(s && m) { s.style.display='flex'; m.textContent = 'Ошибка загрузки библиотек. Проверьте интернет-соединение.'; }
+  }
+});
+</script>
 <script type="text/babel">
 const {useState,useEffect,useRef} = React;
 const tg = window.Telegram?.WebApp;
@@ -156,40 +178,76 @@ const DEMO_MODE  = !SERVER_URL;
 const _demo = {
   registered: false,
   username: "",
-  balance: 500,   // стартовый баланс
+  balance: 500,
   vip: 1,
   games: 0, wins: 0, total_bet: 0, total_win: 0,
   history: [],
   last_bonus: null,
   ref_count: 0,
   invoice_pending: null,
+  nonce: 0,
+  hashed_seed: "demo_seed_hash_not_real",
+};
+
+// ── Провабли Фэйр утилиты (работают в браузере) ──────────────
+const PF = {
+  // HMAC-SHA256 через SubtleCrypto API
+  async hmac(key, message) {
+    const enc = new TextEncoder();
+    const k = await crypto.subtle.importKey(
+      'raw', enc.encode(key),
+      {name:'HMAC', hash:'SHA-256'}, false, ['sign']
+    );
+    const sig = await crypto.subtle.sign('HMAC', k, enc.encode(message));
+    return Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  },
+  // Получить float 0-1 из хэша
+  async getFloat(serverSeed, clientSeed, nonce) {
+    const hash = await this.hmac(clientSeed, `${serverSeed}:${nonce}`);
+    const val = parseInt(hash.slice(0,8), 16);
+    return val / 0xFFFFFFFF;
+  },
+  // Краш: из float → множитель
+  crashPoint(r) {
+    if(r < 0.05) return 1.00;
+    return Math.min(Math.round((0.95/(1-r))*100)/100, 100);
+  },
+  // Рулетка: 0-36
+  roulette(r) { return Math.floor(r * 37); },
 };
 
 async function api(method, body={}, silent=false) {
-  // ── ДЕМО РЕЖИМ ────────────────────────────────────────────────
+  // ── ДЕМО РЕЖИМ (активен пока SERVER_URL пустой) ───────────────
   if(DEMO_MODE) {
-    await new Promise(r=>setTimeout(r,120)); // имитируем задержку сети
+    await new Promise(r=>setTimeout(r,80));
 
     if(method==='profile'){
       if(!_demo.registered) return {ok:false};
       return {ok:true, data:{
         username:_demo.username, balance:_demo.balance,
         vip:_demo.vip, games:_demo.games, wins:_demo.wins,
-        total_bet:_demo.total_bet, total_win:_demo.total_win
+        total_bet:_demo.total_bet, total_win:_demo.total_win,
+        hashed_seed:_demo.hashed_seed, nonce:_demo.nonce,
       }};
     }
     if(method==='register'){
-      _demo.registered=true; _demo.username=body.username||'Игрок';
+      _demo.registered=true;
+      _demo.username=body.username||'Игрок';
+      _demo.balance=500;
       return {ok:true, balance:500};
     }
     if(method==='play'){
       _demo.balance = _demo.balance - body.bet + (body.win||0);
       _demo.games++; if(body.win>body.bet) _demo.wins++;
       _demo.total_bet+=body.bet; _demo.total_win+=(body.win||0);
-      const profit=(body.win||0)-body.bet;
-      _demo.history.unshift({game:body.game,date:new Date().toISOString(),bet:body.bet,spot:body.spot||0,hits:body.hits||0,win:body.win||0});
+      const nonce = _demo.nonce++;
+      _demo.history.unshift({
+        game:body.game, date:new Date().toISOString(),
+        bet:body.bet, spot:body.spot||0,
+        hits:body.hits||0, win:body.win||0, nonce
+      });
       if(_demo.history.length>30) _demo.history.pop();
-      return {ok:true, balance:_demo.balance};
+      return {ok:true, balance:_demo.balance, nonce, hashed_seed:_demo.hashed_seed};
     }
     if(method==='balance') return {ok:true,balance:_demo.balance,vip:_demo.vip,rate:0.013,rate_str:'1 USDT = 76 ★  ·  1000 ★ = $13.00'};
     if(method==='rate')    return {ok:true,rate:0.013,formatted:'1 USDT = 76 ★  ·  1000 ★ = $13.00'};
@@ -207,6 +265,22 @@ async function api(method, body={}, silent=false) {
       _demo.balance+=bonus; _demo.last_bonus=Date.now();
       return {ok:true,bonus};
     }
+    if(method==='cashback_status'){
+      const loss=_demo.total_bet-_demo.total_win;
+      if(loss>=1000) return {ok:true,available:true,cashback:Math.floor(loss*.05),weekly_loss:loss};
+      return {ok:true,available:false,min_loss:1000,current_loss:Math.max(0,loss)};
+    }
+    if(method==='claim_cashback'){
+      const loss=_demo.total_bet-_demo.total_win;
+      if(loss<1000) return {ok:false,error:'Недостаточно проигрышей'};
+      const cb=Math.floor(loss*.05);
+      _demo.balance+=cb;
+      return {ok:true,cashback:cb,balance:_demo.balance};
+    }
+    if(method==='seed_info') return {ok:true,
+      hashed_server_seed:_demo.hashed_seed,
+      client_seed:'demo_client',
+      nonce:_demo.nonce};
     if(method==='history') return {ok:true,history:_demo.history};
     if(method==='top')     return {ok:true,top:[{username:_demo.username||'Вы',balance:_demo.balance,vip:_demo.vip}]};
     if(method==='referrals') return {ok:true,count:_demo.ref_count};
@@ -214,18 +288,24 @@ async function api(method, body={}, silent=false) {
     // ── ДЕМО ПОПОЛНЕНИЕ ────────────────────────────────────────
     if(method==='create_invoice'){
       const stars=Math.floor(body.amount_usdt/0.013);
-      _demo.invoice_pending={id:Date.now(),usdt:body.amount_usdt,stars};
+      const isFirst=!_demo.had_deposit;
+      const bonus_stars=isFirst?stars:0;
+      const stars_total=stars+bonus_stars;
+      _demo.invoice_pending={id:Date.now(),usdt:body.amount_usdt,stars,bonus_stars,stars_total,is_first:isFirst};
       return {ok:true,invoice_id:_demo.invoice_pending.id,
               pay_url:'https://t.me/CryptoBot',
-              amount_usdt:body.amount_usdt, stars,
+              amount_usdt:body.amount_usdt,
+              stars, bonus_stars, stars_total, is_first:isFirst,
               rate:0.013, rate_str:'1 USDT = 76 ★', demo:true};
     }
     if(method==='check_invoice'){
-      // ДЕМО: сразу подтверждаем без реальной оплаты
       if(!_demo.invoice_pending) return {ok:false,error:'Счёт не найден'};
-      const {stars,usdt}=_demo.invoice_pending;
-      _demo.balance+=stars; _demo.invoice_pending=null;
-      return {ok:true,paid:true,stars,rate_str:'1 USDT = 76 ★',demo:true};
+      const {stars,stars_total,bonus_stars,is_first}=_demo.invoice_pending;
+      _demo.balance+=stars_total||stars;
+      if(is_first) _demo.had_deposit=true;
+      _demo.invoice_pending=null;
+      return {ok:true,paid:true,stars:stars_total||stars,
+              bonus_stars:bonus_stars||0,rate_str:'1 USDT = 76 ★',demo:true};
     }
 
     // ── ДЕМО ВЫВОД ─────────────────────────────────────────────
@@ -242,6 +322,7 @@ async function api(method, body={}, silent=false) {
   // ── РЕАЛЬНЫЙ СЕРВЕР ───────────────────────────────────────────
   // Раскомментируй SERVER_URL выше чтобы активировать
   try{
+    console.log('[API]', method, body);
     const r=await fetch(`${SERVER_URL}/api/${method}`,{
       method:"POST",
       headers:{"Content-Type":"application/json","X-Init-Data":tg?.initData||""},
@@ -348,19 +429,82 @@ function Registration({onDone}){
 function ProfilePage({profile,balance,onRefresh}){
   const profit=(profile.total_win||0)-(profile.total_bet||0);
   const wr=profile.games>0?((profile.wins/profile.games)*100).toFixed(1):0;
+  const vip=profile.vip||1;
+
+  // VIP прогресс
+  const VIP_REQ=[0,0,10000,50000,200000,500000];
+  const VIP_NAMES=['','BRONZE','SILVER','GOLD','PLATINUM','DIAMOND'];
+  const VIP_COLORS=['','#CD7F32','#C0C0C0','#FFD700','#E5E4E2','#b9f2ff'];
+  const curBet=profile.total_bet||0;
+  const nextReq=VIP_REQ[vip+1]||VIP_REQ[5];
+  const curReq=VIP_REQ[vip]||0;
+  const pct=vip>=5?100:Math.min(100,Math.floor((curBet-curReq)/(nextReq-curReq)*100));
+
+  const [showSeed,setShowSeed]=useState(false);
+
   return <div>
     <div className="card" style={{textAlign:'center',padding:'20px 15px'}}>
       <div className="avatar">👑</div>
-      <div style={{fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,marginBottom:8}}>{profile.username}</div>
-      <div className="vip-b">★ VIP {profile.vip||1}</div>
-      <div style={{fontFamily:"'Cinzel',serif",fontSize:28,fontWeight:900,color:'var(--gold2)',marginTop:14}}>{balance.toLocaleString()} ★</div>
+      <div style={{fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,marginBottom:6}}>{profile.username}</div>
+      <div className="vip-b" style={{background:`linear-gradient(135deg,${VIP_COLORS[vip]}88,${VIP_COLORS[vip]})`,marginBottom:10}}>
+        ★ VIP {vip} · {VIP_NAMES[vip]}
+      </div>
+      {/* VIP прогресс бар */}
+      {vip<5&&<div style={{width:'100%',margin:'8px 0'}}>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'var(--mut)',marginBottom:4}}>
+          <span>{curBet.toLocaleString()} ★</span>
+          <span>до VIP {vip+1}: {nextReq.toLocaleString()} ★</span>
+        </div>
+        <div style={{height:6,background:'rgba(255,255,255,.06)',borderRadius:3,overflow:'hidden'}}>
+          <div style={{height:'100%',width:pct+'%',background:`linear-gradient(90deg,${VIP_COLORS[vip]},${VIP_COLORS[vip+1]||'#FFD700'})`,borderRadius:3,transition:'width .5s ease'}}/>
+        </div>
+        <div style={{fontSize:10,color:'var(--mut)',textAlign:'right',marginTop:3}}>{pct}%</div>
+      </div>}
+      {vip>=5&&<div style={{fontSize:11,color:'var(--gold2)',marginTop:4}}>🏆 Максимальный уровень!</div>}
+      <div style={{fontFamily:"'Cinzel',serif",fontSize:28,fontWeight:900,color:'var(--gold2)',marginTop:10}}>{balance.toLocaleString()} ★</div>
     </div>
+
     <div className="card">
       <div className="ctit">Статистика</div>
-      {[['Ставок всего',(profile.total_bet||0).toLocaleString()+' ★'],['Выиграно всего',(profile.total_win||0).toLocaleString()+' ★'],['Профит',(profit>=0?'+':'')+profit.toLocaleString()+' ★',profit>=0?'var(--em2)':'var(--ruby)'],['Игр',profile.games||0],['Побед',profile.wins||0],['Винрейт',wr+'%','var(--gold2)']].map(([k,v,c])=>(
-        <div key={k} className="sl"><span className="sk">{k}</span><span className="sv" style={{color:c||'var(--txt)'}}>{v}</span></div>
+      {[['Ставок всего',(profile.total_bet||0).toLocaleString()+' ★'],
+        ['Выиграно',(profile.total_win||0).toLocaleString()+' ★'],
+        ['Профит',(profit>=0?'+':'')+profit.toLocaleString()+' ★',profit>=0?'var(--em2)':'var(--ruby)'],
+        ['Игр сыграно',profile.games||0],
+        ['Побед',profile.wins||0],
+        ['Винрейт',wr+'%','var(--gold2)']
+      ].map(([k,v,c])=>(
+        <div key={k} className="sl">
+          <span className="sk">{k}</span>
+          <span className="sv" style={{color:c||'var(--txt)'}}>{v}</span>
+        </div>
       ))}
     </div>
+
+    {/* Провабли Фэйр */}
+    <div className="card">
+      <div className="ctit">🔐 Provably Fair</div>
+      <div style={{fontSize:11,color:'var(--mut)',marginBottom:10,lineHeight:1.6}}>
+        Все результаты генерируются честно. Ты можешь проверить любую игру зная seed.
+      </div>
+      <button className="btn btn-ghost" style={{marginBottom:0}}
+        onClick={()=>setShowSeed(s=>!s)}>
+        {showSeed?'🔒 Скрыть':'🔓 Показать мой seed'}
+      </button>
+      {showSeed&&<div style={{marginTop:10}}>
+        <div className="flbl">Hashed Server Seed</div>
+        <div style={{background:'var(--obs)',border:'1px solid var(--bdr)',borderRadius:7,padding:'8px 10px',fontSize:10,fontFamily:'monospace',color:'var(--gold2)',wordBreak:'break-all',marginBottom:8}}>
+          {profile.hashed_seed||'—'}
+        </div>
+        <div className="flbl">Nonce (игра #)</div>
+        <div style={{background:'var(--obs)',border:'1px solid var(--bdr)',borderRadius:7,padding:'8px 10px',fontSize:13,fontFamily:'monospace',color:'var(--em2)'}}>
+          {profile.nonce||0}
+        </div>
+        <div style={{fontSize:10,color:'var(--mut)',marginTop:8,lineHeight:1.5}}>
+          После каждой игры nonce увеличивается. После раунда мы покажем настоящий server seed — ты сможешь проверить результат сам.
+        </div>
+      </div>}
+    </div>
+
     <button className="btn btn-ghost" onClick={onRefresh}>🔄 Обновить</button>
   </div>;
 }
@@ -369,9 +513,16 @@ function BonusPage({balance,setBalance,vip}){
   const [status,setStatus]=useState(null);
   const [timeLeft,setTimeLeft]=useState('');
   const [loading,setLoading]=useState(false);
+  const [cashback,setCashback]=useState(null);
+  const [cbLoading,setCbLoading]=useState(false);
   const amt=Math.floor(20*(1+(vip-1)*.2));
 
-  useEffect(()=>{api('bonus_status',{},true).then(r=>{if(r.ok){setStatus(r.can_claim?'can':'wait');if(r.time_left)setTimeLeft(r.time_left);}});},[]);
+  useEffect(()=>{
+    api('bonus_status',{},true).then(r=>{
+      if(r.ok){setStatus(r.can_claim?'can':'wait');if(r.time_left)setTimeLeft(r.time_left);}
+    });
+    api('cashback_status',{},true).then(r=>{if(r.ok)setCashback(r);});
+  },[]);
 
   async function claim(){
     setLoading(true);
@@ -380,7 +531,17 @@ function BonusPage({balance,setBalance,vip}){
     else{setTimeLeft(r.time_left||'');setStatus('wait');}
     setLoading(false);
   }
+
+  async function claimCashback(){
+    setCbLoading(true);
+    const r=await api('claim_cashback');
+    if(r.ok){snd.i();snd.win();burst(true);setBalance(b=>b+r.cashback);showToast(`💰 Кэшбэк +${r.cashback} ★!`);setCashback({available:false,days_left:7});}
+    else showToast(r.error||'❌ Ошибка');
+    setCbLoading(false);
+  }
+
   return <div>
+    {/* Ежедневный бонус */}
     <div className="card" style={{textAlign:'center',padding:'20px 15px'}}>
       <div style={{fontFamily:"'Cinzel',serif",fontSize:38,fontWeight:900,color:'var(--gold2)',animation:'float 2s ease infinite'}}>{amt} ★</div>
       <div style={{fontSize:11,color:'var(--mut)',letterSpacing:2,textTransform:'uppercase',marginTop:4}}>Бонус дня · VIP {vip}</div>
@@ -389,6 +550,35 @@ function BonusPage({balance,setBalance,vip}){
     {status==='win'&&<div className="res rw"><div className="rbig">+{amt} ★</div><div className="rsub">ПОЛУЧЕНО!</div></div>}
     {status==='wait'&&<div className="res rt"><div className="rbig">⏳</div><div className="rsub">СЛЕДУЮЩИЙ ЧЕРЕЗ {timeLeft}</div></div>}
     {(status==='can'||!status)&&<button className="btn btn-gold" onClick={claim} disabled={loading||!status}>{loading?<><div className="spinner"/>ПОЛУЧАЕМ...</>:'🎁 ПОЛУЧИТЬ БОНУС'}</button>}
+
+    {/* Кэшбэк */}
+    <div className="card" style={{marginTop:4}}>
+      <div className="ctit">💰 Еженедельный кэшбэк</div>
+      {cashback===null&&<div className="loading"><div className="spinner"/>Загружаем...</div>}
+      {cashback?.available&&<>
+        <div style={{textAlign:'center',marginBottom:12}}>
+          <div style={{fontFamily:"'Cinzel',serif",fontSize:30,fontWeight:900,color:'var(--em2)'}}>+{cashback.cashback?.toLocaleString()} ★</div>
+          <div style={{fontSize:11,color:'var(--mut)',marginTop:4}}>5% от проигрыша {cashback.weekly_loss?.toLocaleString()} ★ за неделю</div>
+        </div>
+        <button className="btn btn-em" onClick={claimCashback} disabled={cbLoading}>{cbLoading?<><div className="spinner"/>ПОЛУЧАЕМ...</>:'💰 ПОЛУЧИТЬ КЭШБЭК'}</button>
+      </>}
+      {cashback&&!cashback.available&&cashback.days_left&&<div style={{textAlign:'center',padding:'10px 0',color:'var(--mut)',fontSize:13}}>
+        ⏳ Следующий кэшбэк через <b style={{color:'var(--gold2)'}}>{cashback.days_left} дн.</b>
+      </div>}
+      {cashback&&!cashback.available&&!cashback.days_left&&<div style={{fontSize:12,color:'var(--mut)',lineHeight:1.6}}>
+        Проиграй минимум <b style={{color:'var(--gold2)'}}>{cashback.min_loss?.toLocaleString()||'1,000'} ★</b> за неделю чтобы получить 5% обратно.<br/>
+        Сейчас: <b style={{color:'var(--txt)'}}>{cashback.current_loss?.toLocaleString()||0} ★</b>
+      </div>}
+    </div>
+
+    {/* Таблица VIP бонусов */}
+    <div className="card">
+      <div className="ctit">VIP бонусы</div>
+      {[1,2,3,4,5].map(v=><div key={v} className="sl">
+        <span className="sk">VIP {v} {'⭐'.repeat(v)}</span>
+        <span className="sv" style={{color:vip>=v?'var(--gold2)':'var(--mut)'}}>{Math.floor(20*(1+(v-1)*.2))} ★/день</span>
+      </div>)}
+    </div>
   </div>;
 }
 
@@ -422,12 +612,25 @@ function TopupPage({balance,setBalance}){
   }
 
   if(step===3)return <div>
-    <div className="res rw" style={{marginTop:0}}><div className="rbig">+{inv?.stars} ★</div><div className="rsub">БАЛАНС ПОПОЛНЕН!</div></div>
-    <div className="card" style={{marginTop:12,textAlign:'center'}}>
+    <div className="res rw" style={{marginTop:0}}>
+      <div className="rbig">+{(inv?.stars_total||inv?.stars||0).toLocaleString()} ★</div>
+      <div className="rsub">{inv?.bonus_stars>0?`ВКЛЮЧАЯ БОНУС x2 🎁`:'БАЛАНС ПОПОЛНЕН!'}</div>
+    </div>
+    {inv?.bonus_stars>0&&<div className="card" style={{marginTop:8,background:'rgba(0,200,120,.06)',border:'1px solid rgba(0,200,120,.25)'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span style={{fontSize:13}}>💰 Основная сумма</span>
+        <span style={{fontFamily:"'Cinzel',serif",fontWeight:700,color:'var(--gold2)'}}>{(inv?.stars||0).toLocaleString()} ★</span>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:6}}>
+        <span style={{fontSize:13}}>🎁 Бонус первого депозита</span>
+        <span style={{fontFamily:"'Cinzel',serif",fontWeight:700,color:'var(--em2)'}}>+{(inv?.bonus_stars||0).toLocaleString()} ★</span>
+      </div>
+    </div>}
+    <div className="card" style={{marginTop:8,textAlign:'center'}}>
       <div style={{fontSize:32,marginBottom:8}}>✅</div>
       <div style={{fontWeight:700}}>Пополнение выполнено</div>
       <div style={{color:'var(--mut)',fontSize:12,marginTop:4}}>Баланс: {balance.toLocaleString()} ★</div>
-      {inv?.demo&&<div style={{color:'var(--ruby)',fontSize:11,marginTop:8}}>🔧 Демо режим — реальных денег нет</div>}
+      {inv?.demo&&<div style={{color:'var(--ruby)',fontSize:11,marginTop:8}}>🔧 Демо режим</div>}
     </div>
     <button className="btn btn-gold" onClick={()=>{setStep(1);setInv(null);}}>💳 Пополнить ещё</button>
   </div>;
@@ -438,7 +641,13 @@ function TopupPage({balance,setBalance}){
       <div style={{fontSize:36,marginBottom:10}}>💳</div>
       <div style={{fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,marginBottom:4}}>Счёт создан</div>
       <div style={{color:'var(--mut)',fontSize:12,marginBottom:14}}>В реальном режиме — оплата через @CryptoBot</div>
-      {[['Сумма',`${inv?.amount_usdt} USDT`],['Зачислится',`${inv?.stars?.toLocaleString()} ★`],['Режим','🔧 Демо']].map(([k,v])=>(
+      {[
+        ['Сумма',`${inv?.amount_usdt} USDT`],
+        ['Основная сумма',`${(inv?.stars||0).toLocaleString()} ★`],
+        ...(inv?.bonus_stars>0?[['🎁 Бонус x2',`+${(inv?.bonus_stars||0).toLocaleString()} ★`]]:[]),
+        ['Итого зачислится',`${(inv?.stars_total||inv?.stars||0).toLocaleString()} ★`],
+        ...(DEMO_MODE?[['Режим','🔧 Демо']]:[]),
+      ].map(([k,v])=>(
         <div key={k} className="sl"><span className="sk">{k}</span><span className="sv">{v}</span></div>
       ))}
     </div>
@@ -450,6 +659,11 @@ function TopupPage({balance,setBalance}){
 
   return <div>
     <div className="demo-badge">🔧 ДЕМО — реальных денег нет</div>
+    {/* Баннер первого депозита */}
+    {!_demo.had_deposit&&DEMO_MODE&&<div style={{background:'linear-gradient(135deg,rgba(0,200,120,.1),rgba(0,200,120,.05))',border:'1px solid rgba(0,200,120,.3)',borderRadius:12,padding:'12px 14px',marginBottom:12,display:'flex',alignItems:'center',gap:10}}>
+      <span style={{fontSize:28}}>🎁</span>
+      <div><div style={{fontWeight:700,fontSize:13,color:'var(--em2)'}}>Бонус первого депозита!</div><div style={{fontSize:11,color:'var(--mut)',marginTop:2}}>Первое пополнение × 2 — мы удвоим сумму!</div></div>
+    </div>}
     <div className="rbadge">📊 {rateStr}</div>
     <div className="card">
       <div className="ctit">Сумма</div>
@@ -521,7 +735,18 @@ function HistoryPage(){
   if(!items)return <div className="loading"><div className="spinner"/>Загружаем...</div>;
   if(!items.length)return <div style={{textAlign:'center',padding:40,color:'var(--mut)'}}>📜 Сыграйте первую игру!</div>;
   return <div className="card"><div className="ctit">Последние игры</div>
-    {items.map((h,i)=>{const p=(h.win||0)-(h.bet||0);return<div key={i} className="hrow"><div className="hico">{ICO[h.game]||'🎲'}</div><div className="hinfo"><div className="hgame">{(h.game||'').toUpperCase()}</div><div className="hdate">{fmt(h.date)} · ставка {(h.bet||0).toLocaleString()} ★</div></div><div className={`hamt ${p>=0?'w':'l'}`}>{p>=0?'+':''}{p.toLocaleString()} ★</div></div>;})}
+    {items.map((h,i)=>{
+      const p=(h.win||0)-(h.bet||0);
+      return<div key={i} className="hrow">
+        <div className="hico">{ICO[h.game]||'🎲'}</div>
+        <div className="hinfo">
+          <div className="hgame">{(h.game||'').toUpperCase()}</div>
+          <div className="hdate">{fmt(h.date)} · ставка {(h.bet||0).toLocaleString()} ★</div>
+          {h.nonce!==undefined&&<div style={{fontSize:9,color:'var(--mut)',marginTop:1}}>Игра #{h.nonce}</div>}
+        </div>
+        <div className={`hamt ${p>=0?'w':'l'}`}>{p>=0?'+':''}{p.toLocaleString()} ★</div>
+      </div>;
+    })}
   </div>;
 }
 
@@ -741,8 +966,9 @@ function App(){
 
   function onReg(d){
     setProfile({username:d.username,vip:1,total_bet:0,total_win:0,wins:0,games:0});
-    setBalance(d.balance||500);
+    setBalance(d.balance||500);  // стартовый баланс 500
     setReg(true);
+    showToast('🎉 Добро пожаловать, '+d.username+'!');
   }
   async function refresh(){
     const r=await api('profile');
