@@ -231,6 +231,10 @@ async function api(method, body={}, silent=false) {
       }};
     }
     if(method==='register'){
+      // Проверка уникальности в демо режиме
+      const taken=['admin','royal','keno','bot','system','moderator'];
+      if(taken.includes((body.username||'').toLowerCase()))
+        return {ok:false, error:'Этот никнейм занят, выбери другой'};
       _demo.registered=true;
       _demo.username=body.username||'Игрок';
       _demo.balance=500;
@@ -825,7 +829,12 @@ function CrashGame({balance,setBalance}){
   </div>;
 }
 
-const SYMS=['🍋','🍊','🍇','🔔','💎','7️⃣','🎰'],WGTS=[30,25,20,12,8,4,1],PAYS={'🍋':2,'🍊':3,'🍇':5,'🔔':10,'💎':25,'7️⃣':50,'🎰':200};
+const SYMS=['🍋','🍊','🍇','🔔','💎','7️⃣','🎰'];
+const WGTS=[30,25,20,12,8,4,1];
+// Выплаты за 3 одинаковых — пересмотрены для RTP ~85%
+const PAYS={'🍋':3,'🍊':5,'🍇':8,'🔔':15,'💎':40,'7️⃣':80,'🎰':300};
+// Выплаты за 2 одинаковых (любые) — возврат ставки
+const PAYS2={'🍋':1,'🍊':1,'🍇':1,'🔔':2,'💎':3,'7️⃣':5,'🎰':10};
 function wr(){let s=WGTS.reduce((a,b)=>a+b),r=Math.random()*s;for(let i=0;i<SYMS.length;i++){r-=WGTS[i];if(r<=0)return SYMS[i];}return SYMS[0];}
 
 function SlotsGame({balance,setBalance}){
@@ -838,7 +847,20 @@ function SlotsGame({balance,setBalance}){
     if(bet<50||bet>balance||busy)return;snd.i();setBusy(true);setWin(null);setBalance(b=>b-bet);
     const final=[wr(),wr(),wr()];setSpin([true,true,true]);
     [0,1,2].forEach(i=>setTimeout(()=>{snd.deal();setSpin(s=>{const n=[...s];n[i]=false;return n;});setReels(r=>{const n=[...r];n[i]=final[i];return n;});
-      if(i===2){const [a,b2,c]=final;let w=0,txt='';if(a===b2&&b2===c){w=Math.floor(bet*PAYS[a]);txt=`Три ${a}! ×${PAYS[a]}`;}else if(a===b2||b2===c||a===c){w=Math.floor(bet*.5);txt='Два совпадения';}else txt='Нет совпадений';if(w>0){setBalance(b=>b+w);snd.win();if(w>bet*5)snd.jackpot();burst(true);}else snd.lose();setWin({w,profit:w-bet,txt});setBusy(false);api('play',{game:'slots',bet,win:w});}
+      if(i===2){const [a,b2,c]=final;let w=0,txt='';
+        if(a===b2&&b2===c){
+          w=Math.floor(bet*PAYS[a]);txt=`Три ${a}! ×${PAYS[a]}`;
+        } else {
+          // Два одинаковых — находим пару и её выплату
+          let pairSym=null;
+          if(a===b2)pairSym=a;
+          else if(b2===c)pairSym=b2;
+          else if(a===c)pairSym=a;
+          if(pairSym){w=Math.floor(bet*(PAYS2[pairSym]||1));txt=`Пара ${pairSym} ×${PAYS2[pairSym]||1}`;}
+          else txt='Нет совпадений';
+        }
+        if(w>0){setBalance(b=>b+w);snd.win();if(w>bet*10)snd.jackpot();burst(true);}else snd.lose();
+        setWin({w,profit:w-bet,txt});setBusy(false);api('play',{game:'slots',bet,win:w});
     },400+i*350));
   }
   return <div>
@@ -849,7 +871,19 @@ function SlotsGame({balance,setBalance}){
     <BetInput value={bet} onChange={setBet} balance={balance}/>
     <button className="btn btn-gold" onClick={go} disabled={busy||bet<50||bet>balance}>{busy?'⏳ КРУТИТСЯ...':'🎰 КРУТИТЬ'}</button>
     {win&&<div className={`res ${win.w>0?'rw':'rl'}`}><div className="rbig">{win.w>0?`+${win.w.toLocaleString()}`:win.profit.toLocaleString()} ★</div><div className="rsub">{win.txt}</div></div>}
-    <div className="card" style={{marginTop:12}}><div className="ctit">Выплаты</div>{Object.entries(PAYS).map(([s,m])=><div key={s} className="sl"><span className="sk">{s} {s} {s}</span><span className="sv" style={{color:'var(--gold2)'}}>×{m}</span></div>)}</div>
+    <div className="card" style={{marginTop:12}}>
+      <div className="ctit">Выплаты</div>
+      <div style={{fontSize:10,color:'var(--mut)',marginBottom:8}}>За 3 одинаковых:</div>
+      {Object.entries(PAYS).map(([s,m])=><div key={s} className="sl">
+        <span className="sk">{s}{s}{s}</span>
+        <span className="sv" style={{color:'var(--gold2)'}}>×{m}</span>
+      </div>)}
+      <div style={{fontSize:10,color:'var(--mut)',margin:'8px 0'}}>За 2 одинаковых:</div>
+      {Object.entries(PAYS2).map(([s,m])=><div key={s} className="sl">
+        <span className="sk">{s}{s} + ?</span>
+        <span className="sv" style={{color:'var(--em)',fontSize:11}}>×{m}</span>
+      </div>)}
+    </div>
   </div>;
 }
 
@@ -907,7 +941,18 @@ function RouletteGame({balance,setBalance}){
   </div>;
 }
 
-const KP={1:{1:3},2:{2:12},3:{2:1,3:42},4:{2:1,3:4,4:120},5:{3:1,4:8,5:800},6:{3:1,4:4,5:88,6:1500},7:{4:1,5:18,6:300,7:4500},8:{5:9,6:90,7:1500,8:10000},9:{4:1,5:6,6:44,7:300,8:4000,9:25000},10:{5:2,6:20,7:142,8:1000,9:4500,10:100000}};
+const KP={
+  1:{1:3},
+  2:{1:1,2:9},
+  3:{1:1,2:2,3:22},
+  4:{2:2,3:5,4:75},
+  5:{2:1,3:3,4:15,5:500},
+  6:{3:2,4:6,5:70,6:1000},
+  7:{3:1,4:5,5:25,6:250,7:3000},
+  8:{4:2,5:10,6:75,7:700,8:7500},
+  9:{4:2,5:6,6:40,7:280,8:3000,9:18000},
+  10:{4:1,5:3,6:22,7:150,8:1200,9:6000,10:80000},
+};
 function KenoGame({balance,setBalance}){
   const [bet,setBet]=useState(50);
   const [sel,setSel]=useState(new Set());
